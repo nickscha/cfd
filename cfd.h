@@ -195,8 +195,9 @@ CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, double viscosity)
     {
       int i = x + y * grid->xdim;
       double thisrho = grid->n0[i] + grid->nN[i] + grid->nS[i] + grid->nE[i] + grid->nW[i] + grid->nNW[i] + grid->nNE[i] + grid->nSW[i] + grid->nSE[i];
-      double thisux = (grid->nE[i] + grid->nNE[i] + grid->nSE[i] - grid->nW[i] - grid->nNW[i] - grid->nSW[i]) / thisrho;
-      double thisuy = (grid->nN[i] + grid->nNE[i] + grid->nNW[i] - grid->nS[i] - grid->nSE[i] - grid->nSW[i]) / thisrho;
+      double invRho = 1.0 / thisrho;
+      double thisux = (grid->nE[i] + grid->nNE[i] + grid->nSE[i] - grid->nW[i] - grid->nNW[i] - grid->nSW[i]) * invRho;
+      double thisuy = (grid->nN[i] + grid->nNE[i] + grid->nNW[i] - grid->nS[i] - grid->nSE[i] - grid->nSW[i]) * invRho;
       double one9thrho = CFD_LBM_ONE_NINTH * thisrho;
       double one36thrho = CFD_LBM_ONE_36TH * thisrho;
       double ux3 = 3 * thisux;
