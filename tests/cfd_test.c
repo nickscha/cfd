@@ -460,29 +460,53 @@ int main(void)
   /* --- SETUP --- */
   int xdim = 600 / pxPerSquare;
   int ydim = 240 / pxPerSquare;
+  size_t nSites = (size_t)(xdim * ydim);
 
   int frame;
 
   cfd_lbm_grid grid;
-  size_t gridSize = (size_t)(xdim * ydim) * sizeof(double);
+
+  /* Calculate total size needed for all arrays */
+  size_t totalSize =
+      nSites * sizeof(double) * 13 /* 13 double arrays      */
+      + nSites * sizeof(int);      /* 1 int array (barrier) */
+
+  void *block = malloc(totalSize);
+  char *ptr = (char *)block;
 
   grid.xdim = xdim;
   grid.ydim = ydim;
 
-  grid.n0 = (double *)malloc(gridSize);
-  grid.nN = (double *)malloc(gridSize);
-  grid.nS = (double *)malloc(gridSize);
-  grid.nE = (double *)malloc(gridSize);
-  grid.nW = (double *)malloc(gridSize);
-  grid.nNE = (double *)malloc(gridSize);
-  grid.nSE = (double *)malloc(gridSize);
-  grid.nNW = (double *)malloc(gridSize);
-  grid.nSW = (double *)malloc(gridSize);
-  grid.rho = (double *)malloc(gridSize);
-  grid.ux = (double *)malloc(gridSize);
-  grid.uy = (double *)malloc(gridSize);
-  grid.curl = (double *)malloc(gridSize);
-  grid.barrier = (int *)calloc((size_t)(xdim * ydim), sizeof(int));
+  grid.n0 = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.nN = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.nS = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.nE = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.nW = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.nNE = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.nSE = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.nNW = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.nSW = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.rho = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.ux = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.uy = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.curl = (double *)ptr;
+  ptr += nSites * sizeof(double);
+  grid.barrier = (int *)ptr;
+  ptr += nSites * sizeof(int);
+
+  memset(grid.barrier, 0, nSites * sizeof(int));
 
   cfd_lbm_init_fluid(&grid, speedSlider);
   cfd_lbm_init_barriers(&grid);
@@ -516,20 +540,7 @@ int main(void)
   printf("Simulation finished.\n");
 
   /* --- CLEANUP --- */
-  free(grid.n0);
-  free(grid.nN);
-  free(grid.nS);
-  free(grid.nE);
-  free(grid.nW);
-  free(grid.nNE);
-  free(grid.nSE);
-  free(grid.nNW);
-  free(grid.nSW);
-  free(grid.rho);
-  free(grid.ux);
-  free(grid.uy);
-  free(grid.curl);
-  free(grid.barrier);
+  free(block);
 
   return 0;
 }
