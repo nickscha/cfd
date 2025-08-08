@@ -17,8 +17,108 @@ LICENSE
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
+
+CFD_API CFD_INLINE double cfd_sin(double x)
+{
+  double term = x;
+  double result = x;
+  double x2 = x * x;
+  int i;
+
+  for (i = 1; i <= 10; ++i)
+  {
+    term *= -x2 / ((2 * i) * (2 * i + 1));
+    result += term;
+  }
+
+  return result;
+}
+
+CFD_API CFD_INLINE double cfd_cos(double x)
+{
+  double term = 1.0;
+  double result = 1.0;
+  double x2 = x * x;
+  int i;
+
+  for (i = 1; i <= 10; ++i)
+  {
+    term *= -x2 / ((2 * i - 1) * (2 * i));
+    result += term;
+  }
+
+  return result;
+}
+
+CFD_API CFD_INLINE double cfd_atan(double z)
+{
+  int sign = 1;
+  double result;
+
+  if (z < 0.0)
+  {
+    sign = -1;
+    z = -z;
+  }
+
+  if (z > 1.0)
+  {
+    result = 1.57079632679 - cfd_atan(1.0 / z); /* pi/2 - atan(1/z) */
+  }
+  else
+  {
+    double z2 = z * z;
+    result = z * (1.0 - z2 * (1.0 / 3.0 - z2 * (1.0 / 5.0 - z2 * (1.0 / 7.0))));
+  }
+
+  return sign * result;
+}
+
+CFD_API CFD_INLINE double cfd_atan2(double y, double x)
+{
+  const double PI = 3.14159265359;
+
+  if (x > 0)
+    return cfd_atan(y / x);
+  if (x < 0 && y >= 0)
+    return cfd_atan(y / x) + PI;
+  if (x < 0 && y < 0)
+    return cfd_atan(y / x) - PI;
+  if (x == 0 && y > 0)
+    return PI / 2;
+  if (x == 0 && y < 0)
+    return -PI / 2;
+  return 0.0;
+}
+
+CFD_API CFD_INLINE double cfd_pow(double base, double exp)
+{
+  /* Only handles positive base for now */
+  int i;
+  double result = 1.0;
+
+  if (exp == 0.0)
+    return 1.0;
+  if (exp == 1.0)
+    return base;
+
+  if ((int)exp == exp)
+  {
+    /* Integer exponent */
+    int e = (int)exp;
+    for (i = 0; i < e; ++i)
+      result *= base;
+    return result;
+  }
+
+  return -1.0;
+}
+
+CFD_API CFD_INLINE int cfd_abs(int x)
+{
+  return (x < 0) ? -x : x;
+}
 
 /* Structure to hold a single cfd_pixel_color's color data */
 typedef struct cfd_cfd_pixel_color_color
@@ -32,8 +132,8 @@ typedef struct cfd_cfd_pixel_color_color
 void cfd_lbm_draw_line(cfd_pixel_color *buffer, int width, int height, int x0, int y0, int x1, int y1, cfd_pixel_color color)
 {
   /* Simple Bresenham's line algorithm */
-  int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-  int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  int dx = cfd_abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  int dy = -cfd_abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
   int err = dx + dy, e2;
 
   for (;;)
@@ -113,7 +213,7 @@ void cfd_lbm_draw_flowlines(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int pxP
       int iy = (int)y;
       double thisUx = grid->ux[ix + iy * grid->xdim];
       double thisUy = grid->uy[ix + iy * grid->xdim];
-      double speed = sqrt(thisUx * thisUx + thisUy * thisUy);
+      double speed = cfd_sqrt(thisUx * thisUx + thisUy * thisUy);
 
       if (speed > 0.0001)
       {
@@ -152,7 +252,7 @@ void cfd_lbm_draw_force_arrow(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int p
     int canvasX = (int)((x + 0.5) * pxPerSquare);
     int canvasY = height - 1 - (int)((y + 0.5) * pxPerSquare);
 
-    double magF = sqrt(Fx * Fx + Fy * Fy);
+    double magF = cfd_sqrt(Fx * Fx + Fy * Fy);
 
     double scale = 4.0 * magF * 100.0;
     int x1 = canvasX;
@@ -163,13 +263,13 @@ void cfd_lbm_draw_force_arrow(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int p
     cfd_pixel_color color = {0, 0, 0};
 
     /* Draw arrowhead */
-    double angle = atan2(-Fy, Fx);
+    double angle = cfd_atan2(-Fy, Fx);
     double arrowAngle = 25.0 * 3.14159 / 180.0;
     double arrowLength = 0.2 * scale;
-    int xA1 = (int)(x2 - arrowLength * cos(angle - arrowAngle));
-    int yA1 = (int)(y2 - arrowLength * sin(angle - arrowAngle));
-    int xA2 = (int)(x2 - arrowLength * cos(angle + arrowAngle));
-    int yA2 = (int)(y2 - arrowLength * sin(angle + arrowAngle));
+    int xA1 = (int)(x2 - arrowLength * cfd_cos(angle - arrowAngle));
+    int yA1 = (int)(y2 - arrowLength * cfd_sin(angle - arrowAngle));
+    int xA2 = (int)(x2 - arrowLength * cfd_cos(angle + arrowAngle));
+    int yA2 = (int)(y2 - arrowLength * cfd_sin(angle + arrowAngle));
 
     if (magF < 1e-6)
     {
@@ -188,7 +288,7 @@ void cfd_lbm_draw_canvas(cfd_lbm_grid *grid, const char *filename, int plotType,
   int height = grid->ydim * pxPerSquare;
   cfd_pixel_color *buffer = (cfd_pixel_color *)malloc((size_t)(width * height) * sizeof(cfd_pixel_color));
 
-  double contrastFactor = pow(1.2, contrast);
+  double contrastFactor = cfd_pow(1.2, contrast);
   int y;
 
   /* Step 1: Draw the main fluid plot */
@@ -226,7 +326,7 @@ void cfd_lbm_draw_canvas(cfd_lbm_grid *grid, const char *filename, int plotType,
           break;
         case 3:
         {
-          double speed = sqrt(grid->ux[x + y * grid->xdim] * grid->ux[x + y * grid->xdim] + grid->uy[x + y * grid->xdim] * grid->uy[x + y * grid->xdim]);
+          double speed = cfd_sqrt(grid->ux[x + y * grid->xdim] * grid->ux[x + y * grid->xdim] + grid->uy[x + y * grid->xdim] * grid->uy[x + y * grid->xdim]);
           value = speed * 4.0;
           break;
         }
