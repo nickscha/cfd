@@ -3,8 +3,8 @@ A C89 standard compliant, single header, nostdlib (no C Standard Library) comput
 
 <p align="center">
 <a href="https://github.com/nickscha/cfd"><img src="assets/cfd.gif"></a>
-<b>A Lattice Boltzmann Fluid Example using speed plot</b>
 </p>
+A Lattice Boltzmann Fluid Example using speed plot.
 
 For more information please look at the "cfd.h" file or take a look at the "examples" or "tests" folder.
 
