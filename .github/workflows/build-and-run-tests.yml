@@ -48,7 +48,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
       - name: Compile cfd tests
-        run: ${{ matrix.cc }} -O2 -std=c89 -pedantic -Wall -Wextra -Werror -Wvla -Wconversion -Wdouble-promotion -Wsign-conversion -Wuninitialized -Winit-self -Wunused -Wunused-macros -Wunused-local-typedefs -o cfd_test_${{ matrix.cc }}.exe tests/cfd_test.c
+        run: ${{ matrix.cc }} -O2 -std=c89 -pedantic -Wall -Wextra -Werror -Wvla -Wconversion -Wdouble-promotion -Wsign-conversion -Wuninitialized -Winit-self -Wunused -Wunused-macros -Wunused-local-typedefs -D_CRT_SECURE_NO_WARNINGS -o cfd_test_${{ matrix.cc }}.exe tests/cfd_test.c
       - name: Run cfd tests
         run: .\cfd_test_${{ matrix.cc }}.exe
       - name: Upload Artifact
