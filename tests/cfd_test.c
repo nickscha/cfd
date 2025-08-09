@@ -469,11 +469,11 @@ int main(void)
   double contrastSlider = 0; /* contrastSlider */
   int stepsSlider = 20;      /* simulation steps per frame */
   double viscSlider = 0.02;  /* fluid viscosity */
-  int plotSelect = 6;        /* plotSelect (0:density, 1:x-vel, 2:y-vel, 3:speed, 4:curl, 5: pressure, 6: wall shear stress) */
+  int plotSelect = 4;        /* plotSelect (0:density, 1:x-vel, 2:y-vel, 3:speed, 4:curl, 5: pressure, 6: wall shear stress) */
   int tracerCheck = 1;       /* tracerCheck (0=off, 1=on) */
   int flowlineCheck = 1;     /* flowlineCheck (0=off, 1=on) */
   int forceCheck = 1;        /* forceCheck (0=off, 1=on) */
-  int frameCount = 1000;      /* Number of frames to generate */
+  int frameCount = 250;      /* Number of frames to generate */
 
   /* --- SETUP --- */
   int xdim = 600 / pxPerSquare;
