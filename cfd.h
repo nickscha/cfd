@@ -187,11 +187,11 @@ CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, double viscosity)
   double omega = 1.0 / (3.0 * viscosity + 0.5);
   int y;
 
-  for (y = 1; y < grid->ydim - 1; y++)
+  for (y = 1; y < grid->ydim - 1; ++y)
   {
     int x;
 
-    for (x = 1; x < grid->xdim - 1; x++)
+    for (x = 1; x < grid->xdim - 1; ++x)
     {
       int i = x + y * grid->xdim;
       double thisrho = grid->n0[i] + grid->nN[i] + grid->nS[i] + grid->nE[i] + grid->nW[i] + grid->nNW[i] + grid->nNE[i] + grid->nSW[i] + grid->nSE[i];
@@ -245,34 +245,34 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
       grid->nNW[x + y * grid->xdim] = grid->nNW[x + 1 + (y - 1) * grid->xdim];
     }
   }
-  for (y = grid->ydim - 2; y > 0; y--)
+  for (y = grid->ydim - 2; y > 0; --y)
   {
-    for (x = grid->xdim - 2; x > 0; x--)
+    for (x = grid->xdim - 2; x > 0; --x)
     {
       grid->nE[x + y * grid->xdim] = grid->nE[x - 1 + y * grid->xdim];
       grid->nNE[x + y * grid->xdim] = grid->nNE[x - 1 + (y - 1) * grid->xdim];
     }
   }
-  for (y = 1; y < grid->ydim - 1; y++)
+  for (y = 1; y < grid->ydim - 1; ++y)
   {
-    for (x = grid->xdim - 2; x > 0; x--)
+    for (x = grid->xdim - 2; x > 0; --x)
     {
       grid->nS[x + y * grid->xdim] = grid->nS[x + (y + 1) * grid->xdim];
       grid->nSE[x + y * grid->xdim] = grid->nSE[x - 1 + (y + 1) * grid->xdim];
     }
   }
-  for (y = 1; y < grid->ydim - 1; y++)
+  for (y = 1; y < grid->ydim - 1; ++y)
   {
-    for (x = 1; x < grid->xdim - 1; x++)
+    for (x = 1; x < grid->xdim - 1; ++x)
     {
       grid->nW[x + y * grid->xdim] = grid->nW[x + 1 + y * grid->xdim];
       grid->nSW[x + y * grid->xdim] = grid->nSW[x + 1 + (y + 1) * grid->xdim];
     }
   }
   /* Handle bounce-back from barriers and calculate force. */
-  for (y = 1; y < grid->ydim - 1; y++)
+  for (y = 1; y < grid->ydim - 1; ++y)
   {
-    for (x = 1; x < grid->xdim - 1; x++)
+    for (x = 1; x < grid->xdim - 1; ++x)
     {
       if (grid->barrier[x + y * grid->xdim])
       {
