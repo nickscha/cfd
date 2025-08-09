@@ -15,9 +15,17 @@ LICENSE
 
 #include "test.h" /* Simple Testing framework */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+
+CFD_API CFD_INLINE void *cfd_memset(void *dest, int c, unsigned long count)
+{
+  char *bytes = (char *)dest;
+  while (count--)
+  {
+    *bytes++ = (char)c;
+  }
+  return dest;
+}
 
 CFD_API CFD_INLINE double cfd_sin(double x)
 {
@@ -446,7 +454,6 @@ void cfd_lbm_draw_canvas(cfd_lbm_grid *grid, const char *filename, int plotType,
 
     if (!fp)
     {
-      perror("Failed to open file for writing");
       free(buffer);
       return;
     }
@@ -524,7 +531,7 @@ int main(void)
   grid.barrier = (int *)ptr;
   ptr += nSites * sizeof(int);
 
-  memset(grid.barrier, 0, nSites * sizeof(int));
+  cfd_memset(grid.barrier, 0, (unsigned long)(nSites * sizeof(int)));
 
   cfd_lbm_init_fluid(&grid, speedSlider);
   cfd_lbm_init_barriers(&grid);
