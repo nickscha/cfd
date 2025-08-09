@@ -1,11 +1,11 @@
 # cfd
-A C89 standard compliant, single header, nostdlib (no C Standard Library) computational fluid dynamics library(CFD).
+A C89 standard compliant, single header, nostdlib (no C Standard Library) computational fluid dynamics library (CFD).
 
 <p align="center">
 <a href="https://github.com/nickscha/cfd"><img src="assets/cfd.gif"></a>
 </p>
 A Lattice Boltzmann Fluid Example using speed plot.
- 
+  
 For more information please look at the "cfd.h" file or take a look at the "examples" or "tests" folder.
 
 > [!WARNING]
@@ -16,7 +16,7 @@ For more information please look at the "cfd.h" file or take a look at the "exam
 Download or clone cfd.h and include it in your project.
 
 ```C
-#include "cfd.h"                /* Vector graphics generator                */
+#include "cfd.h"                /* Computational Fluid Dynamics API        */
 #include "cfd_platform_write.h" /* Optional: OS-Specific write file IO API */
 
 int main() {
