@@ -333,6 +333,22 @@ void cfd_lbm_draw_canvas(cfd_lbm_grid *grid, const char *filename, int plotType,
         case 4:
           value = grid->curl[x + y * grid->xdim] * 5.0;
           break;
+        case 5:
+          value = (grid->rho[x + y * grid->xdim] - 1.0) * 20.0;
+          break;
+        case 6:
+        {
+          /* Wall Shear Stress Plot */
+          double shear = 0.0;
+          if (grid->barrier[x - 1 + y * grid->xdim] || grid->barrier[x + 1 + y * grid->xdim] || grid->barrier[x + (y - 1) * grid->xdim] || grid->barrier[x + (y + 1) * grid->xdim])
+          {
+            /* Calculate the momentum flux near the boundary */
+            shear = grid->nE[x + y * grid->xdim] + grid->nNE[x + y * grid->xdim] + grid->nSE[x + y * grid->xdim] -
+                    grid->nW[x + y * grid->xdim] - grid->nNW[x + y * grid->xdim] - grid->nSW[x + y * grid->xdim];
+          }
+          value = shear * 10.0; /* Scale for visualization */
+          break;
+        }
         }
         value = value * contrastFactor + 0.5;
       }
@@ -443,6 +459,8 @@ void cfd_lbm_draw_canvas(cfd_lbm_grid *grid, const char *filename, int plotType,
   }
 }
 
+#include "perf.h"
+
 int main(void)
 {
   /* --- CONTROLS --- */
@@ -451,11 +469,11 @@ int main(void)
   double contrastSlider = 0; /* contrastSlider */
   int stepsSlider = 20;      /* simulation steps per frame */
   double viscSlider = 0.02;  /* fluid viscosity */
-  int plotSelect = 3;        /* plotSelect (0:density, 1:x-vel, 2:y-vel, 3:speed, 4:curl) */
+  int plotSelect = 6;        /* plotSelect (0:density, 1:x-vel, 2:y-vel, 3:speed, 4:curl, 5: pressure, 6: wall shear stress) */
   int tracerCheck = 1;       /* tracerCheck (0=off, 1=on) */
   int flowlineCheck = 1;     /* flowlineCheck (0=off, 1=on) */
   int forceCheck = 1;        /* forceCheck (0=off, 1=on) */
-  int frameCount = 1000;     /* Number of frames to generate */
+  int frameCount = 1000;      /* Number of frames to generate */
 
   /* --- SETUP --- */
   int xdim = 600 / pxPerSquare;
@@ -522,6 +540,7 @@ int main(void)
     int step;
     char filename[32];
 
+    PERF_PROFILE_WITH_NAME({
     for (step = 0; step < stepsSlider; step++)
     {
       cfd_lbm_collide(&grid, viscSlider);
@@ -530,11 +549,10 @@ int main(void)
       {
         cfd_lbm_move_tracers(&grid);
       }
-    }
+    } }, "lbm_frame_step");
 
     sprintf(filename, "frame_%05d.ppm", frame);
-    cfd_lbm_draw_canvas(&grid, filename, plotSelect, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
-    printf("Generated %s\n", filename);
+    PERF_PROFILE_WITH_NAME(cfd_lbm_draw_canvas(&grid, filename, plotSelect, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck), "lbm_draw_canvas");
   }
 
   printf("Simulation finished.\n");
