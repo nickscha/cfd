@@ -3,7 +3,8 @@ A C89 standard compliant, single header, nostdlib (no C Standard Library) comput
 
 <p align="center">
 <a href="https://github.com/nickscha/cfd"><img src="assets/cfd.gif"></a>
-<br/>
+</p>
+<p align="center">
 <a href="https://github.com/nickscha/cfd"><img src="assets/cfd_curl.gif"></a>
 </p>
 
