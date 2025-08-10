@@ -113,27 +113,62 @@ CFD_API CFD_INLINE float cfd_floorf(float x)
 
 CFD_API CFD_INLINE float cfd_powf(float base, float exp)
 {
-  /* Only handles positive base for now */
-  int i;
-  float result = 1.0f;
+    /* Only handles positive base for now */
+    int i;
+    float result = 1.0f;
 
-  if (exp == 0.0f)
-    return 1.0f;
-  if (exp == 1.0f)
-    return base;
-
-  if (cfd_floorf(exp) == exp)
-  {
-    /* Integer exponent */
-    int e = (int)exp;
-    for (i = 0; i < e; ++i)
+    if (exp == 0.0f)
     {
-      result *= base;
+        return 1.0f;
     }
-    return result;
-  }
+    if (exp == 1.0f)
+    {
+        return base;
+    }
 
-  return -1.0f;
+    /*
+     * Check if exp is an integer.
+     * This is a robust check, but the original logic also worked for this specific use case.
+     */
+    if (cfd_floorf(exp) == exp)
+    {
+        /* Integer exponent */
+        int e = (int)exp;
+
+        /* Handle positive exponents */
+        if (e > 0)
+        {
+            for (i = 0; i < e; ++i)
+            {
+                result *= base;
+            }
+            return result;
+        }
+        /* Handle negative exponents */
+        else if (e < 0)
+        {
+            /* Use the absolute value of the exponent for the loop */
+            int positive_e = (e > 0) ? e : -e;
+            for (i = 0; i < positive_e; ++i)
+            {
+                result *= base;
+            }
+            /* Check for division by zero */
+            if (result == 0.0f)
+            {
+                /* Return an appropriate value for a math error */
+                return 0.0f;
+            }
+            return 1.0f / result;
+        }
+        else /* e == 0 */
+        {
+            return 1.0f;
+        }
+    }
+
+    /* Exponent is not an integer. Return -1.0f as originally implemented. */
+    return -1.0f;
 }
 
 CFD_API CFD_INLINE int cfd_abs(int x)
