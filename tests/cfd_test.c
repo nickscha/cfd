@@ -101,6 +101,16 @@ CFD_API CFD_INLINE float cfd_atan2f(float y, float x)
   return 0.0f;
 }
 
+CFD_API CFD_INLINE float cfd_floorf(float x)
+{
+  int i = (int)x;
+  if (x < (float)i)
+  {
+    return (float)(i - 1);
+  }
+  return (float)i;
+}
+
 CFD_API CFD_INLINE float cfd_powf(float base, float exp)
 {
   /* Only handles positive base for now */
@@ -112,7 +122,7 @@ CFD_API CFD_INLINE float cfd_powf(float base, float exp)
   if (exp == 1.0f)
     return base;
 
-  if ((float)((int)exp) == exp)
+  if (cfd_floorf(exp) == exp)
   {
     /* Integer exponent */
     int e = (int)exp;
