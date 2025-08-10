@@ -112,7 +112,7 @@ CFD_API CFD_INLINE float cfd_powf(float base, float exp)
   if (exp == 1.0f)
     return base;
 
-  if ((int)exp == (int)exp)
+  if ((float)((int)exp) == exp)
   {
     /* Integer exponent */
     int e = (int)exp;
