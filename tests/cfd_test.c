@@ -1,6 +1,6 @@
 /* cfd.h - v0.1 - public domain data structures - nickscha 2025
 
-A C89 standard compliant, single header, nostdlib (no C Standard Library) computational fluid dynamics library(CFD).
+A C89 standard compliant, single header, nostdlib (no C Standard Library) computational fluid dynamics library (CFD).
 
 This Test class defines cases to verify that we don't break the excepted behaviours in the future upon changes.
 
@@ -10,12 +10,13 @@ LICENSE
   See end of file for detailed license information.
 
 */
-#include "../cfd.h"                /* Vector graphics generator                        */
+#include "../cfd.h"                /* Computational Fluid Dynamics API                 */
 #include "../cfd_platform_write.h" /* Optional: OS-Specific write file implementations */
 
 #include "test.h" /* Simple Testing framework */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 CFD_API CFD_INLINE void *cfd_memset(void *dest, int c, unsigned long count)
 {
@@ -27,88 +28,88 @@ CFD_API CFD_INLINE void *cfd_memset(void *dest, int c, unsigned long count)
   return dest;
 }
 
-CFD_API CFD_INLINE double cfd_sin(double x)
+CFD_API CFD_INLINE float cfd_sinf(float x)
 {
-  double term = x;
-  double result = x;
-  double x2 = x * x;
+  float term = x;
+  float result = x;
+  float x2 = x * x;
   int i;
 
   for (i = 1; i <= 10; ++i)
   {
-    term *= -x2 / ((2 * i) * (2 * i + 1));
+    term *= -x2 / ((float)(2 * i) * (float)(2 * i + 1));
     result += term;
   }
 
   return result;
 }
 
-CFD_API CFD_INLINE double cfd_cos(double x)
+CFD_API CFD_INLINE float cfd_cosf(float x)
 {
-  double term = 1.0;
-  double result = 1.0;
-  double x2 = x * x;
+  float term = 1.0f;
+  float result = 1.0f;
+  float x2 = x * x;
   int i;
 
   for (i = 1; i <= 10; ++i)
   {
-    term *= -x2 / ((2 * i - 1) * (2 * i));
+    term *= -x2 / ((float)(2 * i - 1) * (float)(2 * i));
     result += term;
   }
 
   return result;
 }
 
-CFD_API CFD_INLINE double cfd_atan(double z)
+CFD_API CFD_INLINE float cfd_atanf(float z)
 {
   int sign = 1;
-  double result;
+  float result;
 
-  if (z < 0.0)
+  if (z < 0.0f)
   {
     sign = -1;
     z = -z;
   }
 
-  if (z > 1.0)
+  if (z > 1.0f)
   {
-    result = 1.57079632679 - cfd_atan(1.0 / z); /* pi/2 - atan(1/z) */
+    result = 1.57079632679f - cfd_atanf(1.0f / z); /* pi/2 - atan(1/z) */
   }
   else
   {
-    double z2 = z * z;
-    result = z * (1.0 - z2 * (1.0 / 3.0 - z2 * (1.0 / 5.0 - z2 * (1.0 / 7.0))));
+    float z2 = z * z;
+    result = z * (1.0f - z2 * (1.0f / 3.0f - z2 * (1.0f / 5.0f - z2 * (1.0f / 7.0f))));
   }
 
-  return sign * result;
+  return (float)sign * result;
 }
 
-CFD_API CFD_INLINE double cfd_atan2(double y, double x)
+CFD_API CFD_INLINE float cfd_atan2f(float y, float x)
 {
-  const double PI = 3.14159265359;
+  const float PI = 3.14159265359f;
 
-  if (x > 0)
-    return cfd_atan(y / x);
-  if (x < 0 && y >= 0)
-    return cfd_atan(y / x) + PI;
-  if (x < 0 && y < 0)
-    return cfd_atan(y / x) - PI;
-  if (x == 0 && y > 0)
-    return PI / 2;
-  if (x == 0 && y < 0)
-    return -PI / 2;
-  return 0.0;
+  if (x > 0.0f)
+    return cfd_atanf(y / x);
+  if (x < 0.0f && y >= 0.0f)
+    return cfd_atanf(y / x) + PI;
+  if (x < 0.0f && y < 0.0f)
+    return cfd_atanf(y / x) - PI;
+  if (x == 0.0f && y > 0.0f)
+    return PI / 2.0f;
+  if (x == 0.0f && y < 0.0f)
+    return -PI / 2.0f;
+  return 0.0f;
 }
 
-CFD_API CFD_INLINE double cfd_pow(double base, double exp)
+CFD_API CFD_INLINE float cfd_powf(float base, float exp)
 {
   /* Only handles positive base for now */
   int i;
-  double result = 1.0;
+  float result = 1.0f;
 
-  if (exp == 0.0)
-    return 1.0;
-  if (exp == 1.0)
+  if (exp == 0.0f)
+    return 1.0f;
+  if (exp == 1.0f)
     return base;
 
   if ((int)exp == exp)
@@ -120,7 +121,7 @@ CFD_API CFD_INLINE double cfd_pow(double base, double exp)
     return result;
   }
 
-  return -1.0;
+  return -1.0f;
 }
 
 CFD_API CFD_INLINE int cfd_abs(int x)
@@ -182,8 +183,8 @@ void cfd_lbm_draw_tracers(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int pxPer
 
   for (t = 0; t < CFD_LBM_NUMBER_TRACERS; t++)
   {
-    int canvasX = (int)((grid->tracerX[t] + 0.5) * pxPerSquare);
-    int canvasY = height - 1 - (int)((grid->tracerY[t] + 0.5) * pxPerSquare);
+    int canvasX = (int)((grid->tracerX[t] + 0.5f) * (float)pxPerSquare);
+    int canvasY = height - 1 - (int)((grid->tracerY[t] + 0.5f) * (float)pxPerSquare);
 
     int i;
 
@@ -208,31 +209,31 @@ void cfd_lbm_draw_flowlines(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int pxP
 {
   int width = grid->xdim * pxPerSquare;
   int height = grid->ydim * pxPerSquare;
-  double sitesPerFlowline = 10.0 / pxPerSquare;
-  double y;
+  float sitesPerFlowline = 10.0f / (float)pxPerSquare;
+  float y;
 
-  for (y = sitesPerFlowline / 2; y < grid->ydim; y += sitesPerFlowline)
+  for (y = sitesPerFlowline / 2.0f; y < grid->ydim; y += sitesPerFlowline)
   {
-    double x;
+    float x;
 
-    for (x = sitesPerFlowline / 2; x < grid->xdim; x += sitesPerFlowline)
+    for (x = sitesPerFlowline / 2.0f; x < grid->xdim; x += sitesPerFlowline)
     {
       int ix = (int)x;
       int iy = (int)y;
-      double thisUx = grid->ux[ix + iy * grid->xdim];
-      double thisUy = grid->uy[ix + iy * grid->xdim];
-      double speed = cfd_sqrt(thisUx * thisUx + thisUy * thisUy);
+      float thisUx = grid->ux[ix + iy * grid->xdim];
+      float thisUy = grid->uy[ix + iy * grid->xdim];
+      float speed = cfd_sqrtf(thisUx * thisUx + thisUy * thisUy);
 
-      if (speed > 0.0001)
+      if (speed > 0.0001f)
       {
-        int px = (int)((x + 0.5) * pxPerSquare);
-        int py = height - 1 - (int)((y + 0.5) * pxPerSquare);
+        int px = (int)((x + 0.5f) * (float)pxPerSquare);
+        int py = height - 1 - (int)((y + 0.5f) * (float)pxPerSquare);
         /* The scaling factor determines the length of the lines. */
-        double scale = 0.25 * pxPerSquare * 10.0 / speed;
-        int x1 = (int)(px - thisUx * scale);
-        int y1 = (int)(py + thisUy * scale);
-        int x2 = (int)(px + thisUx * scale);
-        int y2 = (int)(py - thisUy * scale);
+        float scale = 0.25f * (float)pxPerSquare * 10.0f / speed;
+        int x1 = (int)((float)px - thisUx * scale);
+        int y1 = (int)((float)py + thisUy * scale);
+        int x2 = (int)((float)px + thisUx * scale);
+        int y2 = (int)((float)py - thisUy * scale);
 
         cfd_pixel_color color = {80, 80, 80};
         cfd_lbm_draw_line(buffer, width, height, x1, y1, x2, y2, color);
@@ -249,37 +250,37 @@ void cfd_lbm_draw_force_arrow(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int p
   }
 
   {
-    double x = grid->barrierxSum / grid->barrierCount;
-    double y = grid->barrierySum / grid->barrierCount;
-    double Fx = grid->barrierFx;
-    double Fy = grid->barrierFy;
+    float x = grid->barrierxSum / (float)grid->barrierCount;
+    float y = grid->barrierySum / (float)grid->barrierCount;
+    float Fx = grid->barrierFx;
+    float Fy = grid->barrierFy;
 
     int width = grid->xdim * pxPerSquare;
     int height = grid->ydim * pxPerSquare;
 
-    int canvasX = (int)((x + 0.5) * pxPerSquare);
-    int canvasY = height - 1 - (int)((y + 0.5) * pxPerSquare);
+    int canvasX = (int)((x + 0.5f) * (float)pxPerSquare);
+    int canvasY = height - 1 - (int)((y + 0.5f) * (float)pxPerSquare);
 
-    double magF = cfd_sqrt(Fx * Fx + Fy * Fy);
+    float magF = cfd_sqrtf(Fx * Fx + Fy * Fy);
 
-    double scale = 4.0 * magF * 100.0;
+    float scale = 4.0f * magF * 100.0f;
     int x1 = canvasX;
     int y1 = canvasY;
-    int x2 = (int)(canvasX + Fx / magF * scale);
-    int y2 = (int)(canvasY - Fy / magF * scale);
+    int x2 = (int)((float)canvasX + Fx / magF * scale);
+    int y2 = (int)((float)canvasY - Fy / magF * scale);
 
     cfd_pixel_color color = {0, 0, 0};
 
     /* Draw arrowhead */
-    double angle = cfd_atan2(-Fy, Fx);
-    double arrowAngle = 25.0 * 3.14159 / 180.0;
-    double arrowLength = 0.2 * scale;
-    int xA1 = (int)(x2 - arrowLength * cfd_cos(angle - arrowAngle));
-    int yA1 = (int)(y2 - arrowLength * cfd_sin(angle - arrowAngle));
-    int xA2 = (int)(x2 - arrowLength * cfd_cos(angle + arrowAngle));
-    int yA2 = (int)(y2 - arrowLength * cfd_sin(angle + arrowAngle));
+    float angle = cfd_atan2f(-Fy, Fx);
+    float arrowAngle = 25.0f * 3.14159f / 180.0f;
+    float arrowLength = 0.2f * scale;
+    int xA1 = (int)((float)x2 - arrowLength * cfd_cosf(angle - arrowAngle));
+    int yA1 = (int)((float)y2 - arrowLength * cfd_sinf(angle - arrowAngle));
+    int xA2 = (int)((float)x2 - arrowLength * cfd_cosf(angle + arrowAngle));
+    int yA2 = (int)((float)y2 - arrowLength * cfd_sinf(angle + arrowAngle));
 
-    if (magF < 1e-6)
+    if (magF < 1e-6f)
     {
       return;
     }
@@ -290,13 +291,13 @@ void cfd_lbm_draw_force_arrow(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int p
   }
 }
 
-void cfd_lbm_draw_canvas(cfd_lbm_grid *grid, const char *filename, int plotType, double contrast, int pxPerSquare, int tracerCheck, int flowlineCheck, int forceCheck)
+void cfd_lbm_draw_canvas(cfd_lbm_grid *grid, const char *filename, int plotType, float contrast, int pxPerSquare, int tracerCheck, int flowlineCheck, int forceCheck)
 {
   int width = grid->xdim * pxPerSquare;
   int height = grid->ydim * pxPerSquare;
   cfd_pixel_color *buffer = (cfd_pixel_color *)malloc((size_t)(width * height) * sizeof(cfd_pixel_color));
 
-  double contrastFactor = cfd_pow(1.2, contrast);
+  float contrastFactor = cfd_powf(1.2f, contrast);
   int y;
 
   /* Step 1: Draw the main fluid plot */
@@ -311,59 +312,59 @@ void cfd_lbm_draw_canvas(cfd_lbm_grid *grid, const char *filename, int plotType,
 
     for (x = 0; x < grid->xdim; x++)
     {
-      double value = 0;
+      float value = 0.0f;
       int cIndex;
       cfd_pixel_color color;
 
       if (grid->barrier[x + y * grid->xdim])
       {
-        value = -1; /* Special value for barrier */
+        value = -1.0f; /* Special value for barrier */
       }
       else
       {
         switch (plotType)
         {
         case 0:
-          value = (grid->rho[x + y * grid->xdim] - 1.0) * 6.0;
+          value = (grid->rho[x + y * grid->xdim] - 1.0f) * 6.0f;
           break;
         case 1:
-          value = grid->ux[x + y * grid->xdim] * 2.0;
+          value = grid->ux[x + y * grid->xdim] * 2.0f;
           break;
         case 2:
-          value = grid->uy[x + y * grid->xdim] * 2.0;
+          value = grid->uy[x + y * grid->xdim] * 2.0f;
           break;
         case 3:
         {
-          double speed = cfd_sqrt(grid->ux[x + y * grid->xdim] * grid->ux[x + y * grid->xdim] + grid->uy[x + y * grid->xdim] * grid->uy[x + y * grid->xdim]);
-          value = speed * 4.0;
+          float speed = cfd_sqrtf(grid->ux[x + y * grid->xdim] * grid->ux[x + y * grid->xdim] + grid->uy[x + y * grid->xdim] * grid->uy[x + y * grid->xdim]);
+          value = speed * 4.0f;
           break;
         }
         case 4:
-          value = grid->curl[x + y * grid->xdim] * 5.0;
+          value = grid->curl[x + y * grid->xdim] * 5.0f;
           break;
         case 5:
-          value = (grid->rho[x + y * grid->xdim] - 1.0) * 20.0;
+          value = (grid->rho[x + y * grid->xdim] - 1.0f) * 20.0f;
           break;
         case 6:
         {
           /* Wall Shear Stress Plot */
-          double shear = 0.0;
+          float shear = 0.0f;
           if (grid->barrier[x - 1 + y * grid->xdim] || grid->barrier[x + 1 + y * grid->xdim] || grid->barrier[x + (y - 1) * grid->xdim] || grid->barrier[x + (y + 1) * grid->xdim])
           {
             /* Calculate the momentum flux near the boundary */
             shear = grid->nE[x + y * grid->xdim] + grid->nNE[x + y * grid->xdim] + grid->nSE[x + y * grid->xdim] -
                     grid->nW[x + y * grid->xdim] - grid->nNW[x + y * grid->xdim] - grid->nSW[x + y * grid->xdim];
           }
-          value = shear * 10.0; /* Scale for visualization */
+          value = shear * 10.0f; /* Scale for visualization */
           break;
         }
         }
-        value = value * contrastFactor + 0.5;
+        value = value * contrastFactor + 0.5f;
       }
 
       cIndex = (int)(400 * value);
 
-      if (value == -1)
+      if (value == -1.0f)
       {
         cIndex = -1;
       }
@@ -388,29 +389,29 @@ void cfd_lbm_draw_canvas(cfd_lbm_grid *grid, const char *filename, int plotType,
         {
           color.r = 0;
           color.g = 0;
-          color.b = (unsigned char)(255 * (cIndex + 50) / 100.0);
+          color.b = (unsigned char)((float)(255 * (cIndex + 50)) / 100.0f);
         }
         else if (cIndex < 150)
         {
           color.r = 0;
-          color.g = (unsigned char)(255 * (cIndex - 50) / 100.0);
+          color.g = (unsigned char)((float)(255 * (cIndex - 50)) / 100.0f);
           color.b = 255;
         }
         else if (cIndex < 250)
         {
-          color.r = (unsigned char)(255 * (cIndex - 150) / 100.0);
+          color.r = (unsigned char)((float)(255 * (cIndex - 150)) / 100.0f);
           color.g = 255;
-          color.b = 255 - color.r;
+          color.b = (unsigned char)(255 - color.r);
         }
         else if (cIndex < 350)
         {
           color.r = 255;
-          color.g = (unsigned char)(255 * (350 - cIndex) / 100.0);
+          color.g = (unsigned char)((float)(255 * (350 - cIndex)) / 100.0f);
           color.b = 0;
         }
         else
         {
-          color.r = (unsigned char)(255 * (450 - cIndex) / 100.0);
+          color.r = (unsigned char)((float)(255 * (450 - cIndex)) / 100.0f);
           color.g = 0;
           color.b = 0;
         }
@@ -471,16 +472,16 @@ void cfd_lbm_draw_canvas(cfd_lbm_grid *grid, const char *filename, int plotType,
 int main(void)
 {
   /* --- CONTROLS --- */
-  int pxPerSquare = 2;       /* cfd_pixel_colors per grid site */
-  double speedSlider = 0.1;  /* initial fluid speed */
-  double contrastSlider = 0; /* contrastSlider */
-  int stepsSlider = 20;      /* simulation steps per frame */
-  double viscSlider = 0.02;  /* fluid viscosity */
-  int plotSelect = 4;        /* plotSelect (0:density, 1:x-vel, 2:y-vel, 3:speed, 4:curl, 5: pressure, 6: wall shear stress) */
-  int tracerCheck = 1;       /* tracerCheck (0=off, 1=on) */
-  int flowlineCheck = 1;     /* flowlineCheck (0=off, 1=on) */
-  int forceCheck = 1;        /* forceCheck (0=off, 1=on) */
-  int frameCount = 250;      /* Number of frames to generate */
+  int pxPerSquare = 2;         /* cfd_pixel_colors per grid site */
+  float speedSlider = 0.1f;    /* initial fluid speed */
+  float contrastSlider = 0.0f; /* contrastSlider */
+  int stepsSlider = 20;        /* simulation steps per frame */
+  float viscSlider = 0.02f;    /* fluid viscosity */
+  int plotSelect = 4;          /* plotSelect (0:density, 1:x-vel, 2:y-vel, 3:speed, 4:curl, 5: pressure, 6: wall shear stress) */
+  int tracerCheck = 1;         /* tracerCheck (0=off, 1=on) */
+  int flowlineCheck = 1;       /* flowlineCheck (0=off, 1=on) */
+  int forceCheck = 1;          /* forceCheck (0=off, 1=on) */
+  int frameCount = 250;       /* Number of frames to generate */
 
   /* --- SETUP --- */
   int xdim = 600 / pxPerSquare;
@@ -493,8 +494,8 @@ int main(void)
 
   /* Calculate total size needed for all arrays */
   size_t totalSize =
-      nSites * sizeof(double) * 13 /* 13 double arrays      */
-      + nSites * sizeof(int);      /* 1 int array (barrier) */
+      nSites * sizeof(float) * 13 /* 13 double arrays      */
+      + nSites * sizeof(int);     /* 1 int array (barrier) */
 
   void *block = malloc(totalSize);
   char *ptr = (char *)block;
@@ -502,32 +503,32 @@ int main(void)
   grid.xdim = xdim;
   grid.ydim = ydim;
 
-  grid.n0 = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.nN = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.nS = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.nE = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.nW = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.nNE = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.nSE = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.nNW = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.nSW = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.rho = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.ux = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.uy = (double *)ptr;
-  ptr += nSites * sizeof(double);
-  grid.curl = (double *)ptr;
-  ptr += nSites * sizeof(double);
+  grid.n0 = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.nN = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.nS = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.nE = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.nW = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.nNE = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.nSE = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.nNW = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.nSW = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.rho = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.ux = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.uy = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid.curl = (float *)ptr;
+  ptr += nSites * sizeof(float);
   grid.barrier = (int *)ptr;
   ptr += nSites * sizeof(int);
 

@@ -1,6 +1,6 @@
 /* cfd.h - v0.1 - public domain data structures - nickscha 2025
 
-A C89 standard compliant, single header, nostdlib (no C Standard Library) computational fluid dynamics library(CFD).
+A C89 standard compliant, single header, nostdlib (no C Standard Library) computational fluid dynamics library (CFD).
 
 LICENSE
 
@@ -44,26 +44,26 @@ CFD_API CFD_INLINE int cfd_rand(void)
   return (int)((cfd_rand_next >> 16) & CFD_RAND_MAX);
 }
 
-CFD_API CFD_INLINE double cfd_sqrt(double x)
+CFD_API CFD_INLINE float cfd_sqrtf(float x)
 {
-  double guess, prev;
+  float guess, prev;
   int i;
 
-  if (x < 0.0)
+  if (x < 0.0f)
   {
-    return -1.0; /* Or handle as needed */
+    return -1.0f; /* Or handle as needed */
   }
 
-  if (x == 0.0)
+  if (x == 0.0f)
   {
-    return 0.0;
+    return 0.0f;
   }
 
-  guess = x > 1.0 ? x : 1.0; /* Initial guess */
+  guess = x > 1.0f ? x : 1.0f; /* Initial guess */
   for (i = 0; i < 20; ++i)
   {
     prev = guess;
-    guess = 0.5 * (guess + x / guess);
+    guess = 0.5f * (guess + x / guess);
 
     /* Optional convergence check */
     if (guess == prev)
@@ -75,27 +75,27 @@ CFD_API CFD_INLINE double cfd_sqrt(double x)
   return guess;
 }
 
-#define CFD_LBM_FOUR_NINTHS (4.0 / 9.0)
-#define CFD_LBM_ONE_NINTH (1.0 / 9.0)
-#define CFD_LBM_ONE_36TH (1.0 / 36.0)
+#define CFD_LBM_FOUR_NINTHS (4.0f / 9.0f)
+#define CFD_LBM_ONE_NINTH (1.0f / 9.0f)
+#define CFD_LBM_ONE_36TH (1.0f / 36.0f)
 #define CFD_LBM_NUMBER_TRACERS 144
 
 /* Structure to hold all the grid data for the LBM simulation */
 typedef struct cfd_lbm_grid
 {
   int xdim, ydim;
-  double *n0, *nN, *nS, *nE, *nW, *nNE, *nSE, *nNW, *nSW;
-  double *rho, *ux, *uy, *curl;
+  float *n0, *nN, *nS, *nE, *nW, *nNE, *nSE, *nNW, *nSW;
+  float *rho, *ux, *uy, *curl;
   int *barrier;
 
   /* Tracer data */
-  double tracerX[CFD_LBM_NUMBER_TRACERS];
-  double tracerY[CFD_LBM_NUMBER_TRACERS];
+  float tracerX[CFD_LBM_NUMBER_TRACERS];
+  float tracerY[CFD_LBM_NUMBER_TRACERS];
 
   /* Force data */
-  double barrierFx, barrierFy;
+  float barrierFx, barrierFy;
   int barrierCount;
-  double barrierxSum, barrierySum;
+  float barrierxSum, barrierySum;
 
 } cfd_lbm_grid;
 
@@ -116,33 +116,35 @@ CFD_API CFD_INLINE void cfd_lbm_init_barriers(cfd_lbm_grid *grid)
 }
 
 /* Set all densities in a cell to their equilibrium values for a given velocity and density. */
-CFD_API CFD_INLINE void cfd_lbm_init_equilibrium(cfd_lbm_grid *grid, int x, int y, double newux, double newuy, double newrho)
+CFD_API CFD_INLINE void cfd_lbm_init_equilibrium(cfd_lbm_grid *grid, int x, int y, float newux, float newuy, float newrho)
 {
   int i = x + y * grid->xdim;
-  double ux3 = 3 * newux;
-  double uy3 = 3 * newuy;
-  double ux2 = newux * newux;
-  double uy2 = newuy * newuy;
-  double uxuy2 = 2 * newux * newuy;
-  double u2 = ux2 + uy2;
-  double u215 = 1.5 * u2;
+  float ux3 = 3.0f * newux;
+  float uy3 = 3.0f * newuy;
+  float ux2 = newux * newux;
+  float uy2 = newuy * newuy;
+  float uxuy2 = 2.0f * newux * newuy;
+  float u2 = ux2 + uy2;
+  float u215 = 1.5f * u2;
+  float one9th_newrho = CFD_LBM_ONE_NINTH * newrho;
+  float one36th_newrho = CFD_LBM_ONE_36TH * newrho;
 
-  grid->n0[i] = CFD_LBM_FOUR_NINTHS * newrho * (1 - u215);
-  grid->nE[i] = CFD_LBM_ONE_NINTH * newrho * (1 + ux3 + 4.5 * ux2 - u215);
-  grid->nW[i] = CFD_LBM_ONE_NINTH * newrho * (1 - ux3 + 4.5 * ux2 - u215);
-  grid->nN[i] = CFD_LBM_ONE_NINTH * newrho * (1 + uy3 + 4.5 * uy2 - u215);
-  grid->nS[i] = CFD_LBM_ONE_NINTH * newrho * (1 - uy3 + 4.5 * uy2 - u215);
-  grid->nNE[i] = CFD_LBM_ONE_36TH * newrho * (1 + ux3 + uy3 + 4.5 * (u2 + uxuy2) - u215);
-  grid->nSE[i] = CFD_LBM_ONE_36TH * newrho * (1 + ux3 - uy3 + 4.5 * (u2 - uxuy2) - u215);
-  grid->nNW[i] = CFD_LBM_ONE_36TH * newrho * (1 - ux3 + uy3 + 4.5 * (u2 - uxuy2) - u215);
-  grid->nSW[i] = CFD_LBM_ONE_36TH * newrho * (1 - ux3 - uy3 + 4.5 * (u2 + uxuy2) - u215);
+  grid->n0[i] = CFD_LBM_FOUR_NINTHS * newrho * (1.0f - u215);
+  grid->nE[i] = one9th_newrho * (1.0f + ux3 + 4.5f * ux2 - u215);
+  grid->nW[i] = one9th_newrho * (1.0f - ux3 + 4.5f * ux2 - u215);
+  grid->nN[i] = one9th_newrho * (1.0f + uy3 + 4.5f * uy2 - u215);
+  grid->nS[i] = one9th_newrho * (1.0f - uy3 + 4.5f * uy2 - u215);
+  grid->nNE[i] = one36th_newrho * (1.0f + ux3 + uy3 + 4.5f * (u2 + uxuy2) - u215);
+  grid->nSE[i] = one36th_newrho * (1.0f + ux3 - uy3 + 4.5f * (u2 - uxuy2) - u215);
+  grid->nNW[i] = one36th_newrho * (1.0f - ux3 + uy3 + 4.5f * (u2 - uxuy2) - u215);
+  grid->nSW[i] = one36th_newrho * (1.0f - ux3 - uy3 + 4.5f * (u2 + uxuy2) - u215);
   grid->rho[i] = newrho;
   grid->ux[i] = newux;
   grid->uy[i] = newuy;
 }
 
 /* Initialize the fluid to a steady rightward flow. */
-CFD_API CFD_INLINE void cfd_lbm_init_fluid(cfd_lbm_grid *grid, double u0)
+CFD_API CFD_INLINE void cfd_lbm_init_fluid(cfd_lbm_grid *grid, float u0)
 {
   int y;
   for (y = 0; y < grid->ydim; y++)
@@ -150,8 +152,8 @@ CFD_API CFD_INLINE void cfd_lbm_init_fluid(cfd_lbm_grid *grid, double u0)
     int x;
     for (x = 0; x < grid->xdim; x++)
     {
-      cfd_lbm_init_equilibrium(grid, x, y, u0, 0, 1);
-      grid->curl[x + y * grid->xdim] = 0.0;
+      cfd_lbm_init_equilibrium(grid, x, y, u0, 0.0f, 1.0f);
+      grid->curl[x + y * grid->xdim] = 0.0f;
     }
   }
 }
@@ -159,11 +161,11 @@ CFD_API CFD_INLINE void cfd_lbm_init_fluid(cfd_lbm_grid *grid, double u0)
 /* Place tracers in a grid formation. */
 CFD_API CFD_INLINE void cfd_lbm_init_tracers(cfd_lbm_grid *grid)
 {
-  int nRows = (int)cfd_sqrt((double)CFD_LBM_NUMBER_TRACERS);
-  double dx = (double)grid->xdim / nRows;
-  double dy = (double)grid->ydim / nRows;
-  double nextX = dx / 2.0;
-  double nextY = dy / 2.0;
+  int nRows = (int)cfd_sqrtf((float)CFD_LBM_NUMBER_TRACERS);
+  float dx = (float)grid->xdim / (float)nRows;
+  float dy = (float)grid->ydim / (float)nRows;
+  float nextX = dx / 2.0f;
+  float nextY = dy / 2.0f;
 
   int t;
 
@@ -174,17 +176,17 @@ CFD_API CFD_INLINE void cfd_lbm_init_tracers(cfd_lbm_grid *grid)
     nextX += dx;
     if (nextX > grid->xdim)
     {
-      nextX = dx / 2.0;
+      nextX = dx / 2.0f;
       nextY += dy;
     }
   }
 }
 
 /* Collide particles within each cell. */
-CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, double viscosity)
+CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, float viscosity)
 {
 
-  double omega = 1.0 / (3.0 * viscosity + 0.5);
+  float omega = 1.0f / (3.0f * viscosity + 0.5f);
   int y;
 
   for (y = 1; y < grid->ydim - 1; ++y)
@@ -194,33 +196,33 @@ CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, double viscosity)
     for (x = 1; x < grid->xdim - 1; ++x)
     {
       int i = x + y * grid->xdim;
-      double thisrho = grid->n0[i] + grid->nN[i] + grid->nS[i] + grid->nE[i] + grid->nW[i] + grid->nNW[i] + grid->nNE[i] + grid->nSW[i] + grid->nSE[i];
-      double invRho = 1.0 / thisrho;
-      double thisux = (grid->nE[i] + grid->nNE[i] + grid->nSE[i] - grid->nW[i] - grid->nNW[i] - grid->nSW[i]) * invRho;
-      double thisuy = (grid->nN[i] + grid->nNE[i] + grid->nNW[i] - grid->nS[i] - grid->nSE[i] - grid->nSW[i]) * invRho;
-      double one9thrho = CFD_LBM_ONE_NINTH * thisrho;
-      double one36thrho = CFD_LBM_ONE_36TH * thisrho;
-      double ux3 = 3 * thisux;
-      double uy3 = 3 * thisuy;
-      double ux2 = thisux * thisux;
-      double uy2 = thisuy * thisuy;
-      double uxuy2 = 2 * thisux * thisuy;
-      double u2 = ux2 + uy2;
-      double u215 = 1.5 * u2;
+      float thisrho = grid->n0[i] + grid->nN[i] + grid->nS[i] + grid->nE[i] + grid->nW[i] + grid->nNW[i] + grid->nNE[i] + grid->nSW[i] + grid->nSE[i];
+      float invRho = 1.0f / thisrho;
+      float thisux = (grid->nE[i] + grid->nNE[i] + grid->nSE[i] - grid->nW[i] - grid->nNW[i] - grid->nSW[i]) * invRho;
+      float thisuy = (grid->nN[i] + grid->nNE[i] + grid->nNW[i] - grid->nS[i] - grid->nSE[i] - grid->nSW[i]) * invRho;
+      float one9thrho = CFD_LBM_ONE_NINTH * thisrho;
+      float one36thrho = CFD_LBM_ONE_36TH * thisrho;
+      float ux3 = 3.0f * thisux;
+      float uy3 = 3.0f * thisuy;
+      float ux2 = thisux * thisux;
+      float uy2 = thisuy * thisuy;
+      float uxuy2 = 2.0f * thisux * thisuy;
+      float u2 = ux2 + uy2;
+      float u215 = 1.5f * u2;
 
       grid->rho[i] = thisrho;
       grid->ux[i] = thisux;
       grid->uy[i] = thisuy;
 
-      grid->n0[i] += omega * (CFD_LBM_FOUR_NINTHS * thisrho * (1 - u215) - grid->n0[i]);
-      grid->nE[i] += omega * (one9thrho * (1 + ux3 + 4.5 * ux2 - u215) - grid->nE[i]);
-      grid->nW[i] += omega * (one9thrho * (1 - ux3 + 4.5 * ux2 - u215) - grid->nW[i]);
-      grid->nN[i] += omega * (one9thrho * (1 + uy3 + 4.5 * uy2 - u215) - grid->nN[i]);
-      grid->nS[i] += omega * (one9thrho * (1 - uy3 + 4.5 * uy2 - u215) - grid->nS[i]);
-      grid->nNE[i] += omega * (one36thrho * (1 + ux3 + uy3 + 4.5 * (u2 + uxuy2) - u215) - grid->nNE[i]);
-      grid->nSE[i] += omega * (one36thrho * (1 + ux3 - uy3 + 4.5 * (u2 - uxuy2) - u215) - grid->nSE[i]);
-      grid->nNW[i] += omega * (one36thrho * (1 - ux3 + uy3 + 4.5 * (u2 - uxuy2) - u215) - grid->nNW[i]);
-      grid->nSW[i] += omega * (one36thrho * (1 - ux3 - uy3 + 4.5 * (u2 + uxuy2) - u215) - grid->nSW[i]);
+      grid->n0[i] += omega * (CFD_LBM_FOUR_NINTHS * thisrho * (1.0f - u215) - grid->n0[i]);
+      grid->nE[i] += omega * (one9thrho * (1.0f + ux3 + 4.5f * ux2 - u215) - grid->nE[i]);
+      grid->nW[i] += omega * (one9thrho * (1.0f - ux3 + 4.5f * ux2 - u215) - grid->nW[i]);
+      grid->nN[i] += omega * (one9thrho * (1.0f + uy3 + 4.5f * uy2 - u215) - grid->nN[i]);
+      grid->nS[i] += omega * (one9thrho * (1.0f - uy3 + 4.5f * uy2 - u215) - grid->nS[i]);
+      grid->nNE[i] += omega * (one36thrho * (1.0f + ux3 + uy3 + 4.5f * (u2 + uxuy2) - u215) - grid->nNE[i]);
+      grid->nSE[i] += omega * (one36thrho * (1.0f + ux3 - uy3 + 4.5f * (u2 - uxuy2) - u215) - grid->nSE[i]);
+      grid->nNW[i] += omega * (one36thrho * (1.0f - ux3 + uy3 + 4.5f * (u2 - uxuy2) - u215) - grid->nNW[i]);
+      grid->nSW[i] += omega * (one36thrho * (1.0f - ux3 - uy3 + 4.5f * (u2 + uxuy2) - u215) - grid->nSW[i]);
     }
   }
 }
@@ -232,10 +234,10 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
   int x;
 
   grid->barrierCount = 0;
-  grid->barrierxSum = 0;
-  grid->barrierySum = 0;
-  grid->barrierFx = 0.0;
-  grid->barrierFy = 0.0;
+  grid->barrierxSum = 0.0f;
+  grid->barrierySum = 0.0f;
+  grid->barrierFx = 0.0f;
+  grid->barrierFy = 0.0f;
 
   for (y = grid->ydim - 2; y > 0; --y)
   {
@@ -288,8 +290,8 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
         grid->nSW[x - 1 + (y - 1) * grid->xdim] = grid->nNE[index];
         /* Sum forces on barrier sites */
         grid->barrierCount++;
-        grid->barrierxSum += x;
-        grid->barrierySum += y;
+        grid->barrierxSum += (float)x;
+        grid->barrierySum += (float)y;
         grid->barrierFx += grid->nE[index] + grid->nNE[index] + grid->nSE[index] - grid->nW[index] - grid->nNW[index] - grid->nSW[index];
         grid->barrierFy += grid->nN[index] + grid->nNE[index] + grid->nNW[index] - grid->nS[index] - grid->nSE[index] - grid->nSW[index];
       }
@@ -303,8 +305,8 @@ CFD_API CFD_INLINE void cfd_lbm_move_tracers(cfd_lbm_grid *grid)
   int t;
   for (t = 0; t < CFD_LBM_NUMBER_TRACERS; t++)
   {
-    int roundedX = (int)(grid->tracerX[t] + 0.5);
-    int roundedY = (int)(grid->tracerY[t] + 0.5);
+    int roundedX = (int)(grid->tracerX[t] + 0.5f);
+    int roundedY = (int)(grid->tracerY[t] + 0.5f);
 
     int index;
 
@@ -320,8 +322,8 @@ CFD_API CFD_INLINE void cfd_lbm_move_tracers(cfd_lbm_grid *grid)
 
     if (grid->tracerX[t] > grid->xdim - 1)
     {
-      grid->tracerX[t] = 0;
-      grid->tracerY[t] = (double)cfd_rand() / CFD_RAND_MAX * grid->ydim;
+      grid->tracerX[t] = 0.0f;
+      grid->tracerY[t] = (float)cfd_rand() / (float)CFD_RAND_MAX * (float)grid->ydim;
     }
   }
 }
