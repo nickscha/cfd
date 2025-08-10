@@ -84,8 +84,12 @@ CFD_API CFD_INLINE float cfd_sqrtf(float x)
 typedef struct cfd_lbm_grid
 {
   int xdim, ydim;
+
+  /* Particle distributions */
   float *n0, *nN, *nS, *nE, *nW, *nNE, *nSE, *nNW, *nSW;
+
   float *rho, *ux, *uy, *curl;
+
   int *barrier;
 
   /* Tracer data */
@@ -247,6 +251,7 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
       grid->nNW[x + y * grid->xdim] = grid->nNW[x + 1 + (y - 1) * grid->xdim];
     }
   }
+
   for (y = grid->ydim - 2; y > 0; --y)
   {
     for (x = grid->xdim - 2; x > 0; --x)
@@ -255,6 +260,7 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
       grid->nNE[x + y * grid->xdim] = grid->nNE[x - 1 + (y - 1) * grid->xdim];
     }
   }
+
   for (y = 1; y < grid->ydim - 1; ++y)
   {
     for (x = grid->xdim - 2; x > 0; --x)
@@ -263,6 +269,7 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
       grid->nSE[x + y * grid->xdim] = grid->nSE[x - 1 + (y + 1) * grid->xdim];
     }
   }
+
   for (y = 1; y < grid->ydim - 1; ++y)
   {
     for (x = 1; x < grid->xdim - 1; ++x)
@@ -271,6 +278,7 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
       grid->nSW[x + y * grid->xdim] = grid->nSW[x + 1 + (y + 1) * grid->xdim];
     }
   }
+
   /* Handle bounce-back from barriers and calculate force. */
   for (y = 1; y < grid->ydim - 1; ++y)
   {
@@ -288,6 +296,7 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
         grid->nNW[x - 1 + (y + 1) * grid->xdim] = grid->nSE[index];
         grid->nSE[x + 1 + (y - 1) * grid->xdim] = grid->nNW[index];
         grid->nSW[x - 1 + (y - 1) * grid->xdim] = grid->nNE[index];
+
         /* Sum forces on barrier sites */
         grid->barrierCount++;
         grid->barrierxSum += (float)x;
@@ -303,7 +312,7 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
 CFD_API CFD_INLINE void cfd_lbm_move_tracers(cfd_lbm_grid *grid)
 {
   int t;
-  for (t = 0; t < CFD_LBM_NUMBER_TRACERS; t++)
+  for (t = 0; t < CFD_LBM_NUMBER_TRACERS; ++t)
   {
     int roundedX = (int)(grid->tracerX[t] + 0.5f);
     int roundedY = (int)(grid->tracerY[t] + 0.5f);
@@ -331,10 +340,10 @@ CFD_API CFD_INLINE void cfd_lbm_move_tracers(cfd_lbm_grid *grid)
 CFD_API CFD_INLINE void cfd_lbm_compute_curl(cfd_lbm_grid *grid)
 {
   int y;
-  for (y = 1; y < grid->ydim - 1; y++)
+  for (y = 1; y < grid->ydim - 1; ++y)
   {
     int x;
-    for (x = 1; x < grid->xdim - 1; x++)
+    for (x = 1; x < grid->xdim - 1; ++x)
     {
       grid->curl[x + y * grid->xdim] = grid->uy[x + 1 + y * grid->xdim] - grid->uy[x - 1 + y * grid->xdim] - grid->ux[x + (y + 1) * grid->xdim] + grid->ux[x + (y - 1) * grid->xdim];
     }
