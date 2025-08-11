@@ -87,7 +87,8 @@ CFD_API CFD_INLINE float cfd_sqrtf(float x)
 /* Structure to hold all the grid data for the LBM simulation */
 typedef struct cfd_lbm_grid
 {
-  int xdim, ydim;
+  int xdim;
+  int ydim;
 
   /* Particle distributions */
   float *n0, *nN, *nS, *nE, *nW, *nNE, *nSE, *nNW, *nSW;
@@ -349,10 +350,10 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
   {
     for (x = 1; x < grid->xdim - 1; ++x)
     {
-      if (grid->barrier[x + y * grid->xdim])
-      {
-        int index = x + y * grid->xdim;
+      int index = x + y * grid->xdim;
 
+      if (grid->barrier[index])
+      {
         grid->nE[x + 1 + y * grid->xdim] = grid->nW[index];
         grid->nW[x - 1 + y * grid->xdim] = grid->nE[index];
         grid->nN[x + (y + 1) * grid->xdim] = grid->nS[index];
