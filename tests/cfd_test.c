@@ -15,9 +15,7 @@ LICENSE
 #include "cfd_math.h"              /* Math functions to replace math.h                 */
 #include "test.h"                  /* Simple Testing framework                         */
 #include "perf.h"                  /* Simple Performance profiler                      */
-
-#include <stdlib.h>
-#include <stdio.h>
+#include <stdlib.h>                /* malloc/free                                      */
 
 /* Structure to hold a single cfd_pixel_color's color data */
 typedef struct cfd_pixel_color
@@ -115,16 +113,16 @@ CFD_API CFD_INLINE void cfd_lbm_draw_tracers(cfd_pixel_color *buffer, cfd_lbm_gr
   int plot_height = grid->ydim * pxPerSquare;
 
   int t;
-  for (t = 0; t < CFD_LBM_NUMBER_TRACERS; t++)
+  for (t = 0; t < CFD_LBM_NUMBER_TRACERS; ++t)
   {
     int canvasX = (int)((grid->tracerX[t] + 0.5f) * (float)pxPerSquare);
     int canvasY = y_offset + (plot_height - 1 - (int)((grid->tracerY[t] + 0.5f) * (float)pxPerSquare));
 
     int i;
-    for (i = -1; i <= 1; i++)
+    for (i = -1; i <= 1; ++i)
     {
       int j;
-      for (j = -1; j <= 1; j++)
+      for (j = -1; j <= 1; ++j)
       {
         int px = canvasX + i;
         int py = canvasY + j;
@@ -379,14 +377,14 @@ int main(void)
 
   /* --- SIMULATION LOOP --- */
   printf("Starting simulation...\n");
-  for (frame = 0; frame < frameCount; frame++)
+  for (frame = 0; frame < frameCount; ++frame)
   {
     int step;
     char filename[32];
     int plot_type;
 
     PERF_PROFILE_WITH_NAME({
-    for (step = 0; step < stepsSlider; step++)
+    for (step = 0; step < stepsSlider; ++step)
     {
       cfd_lbm_collide(&grid, viscSlider);
       cfd_lbm_stream(&grid);
