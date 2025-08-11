@@ -18,16 +18,6 @@ LICENSE
 #include <stdlib.h>
 #include <stdio.h>
 
-CFD_API CFD_INLINE void *cfd_memset(void *dest, int c, unsigned long count)
-{
-  char *bytes = (char *)dest;
-  while (count--)
-  {
-    *bytes++ = (char)c;
-  }
-  return dest;
-}
-
 /* Structure to hold a single cfd_pixel_color's color data */
 typedef struct cfd_cfd_pixel_color_color
 {
@@ -362,58 +352,19 @@ int main(void)
   /* --- SETUP --- */
   int xdim = 600 / pxPerSquare;
   int ydim = 240 / pxPerSquare;
-  size_t nSites = (size_t)(xdim * ydim);
+
+  void *memory = malloc(cfd_lbm_grid_memory_size(xdim, ydim));
+
+  cfd_lbm_grid grid;
 
   /* --- SETUP FOR COMBINED PLOTS --- */
   int width_per_plot;
   int height_per_plot;
   int total_height;
   cfd_pixel_color *combined_buffer;
-
   int frame;
 
-  cfd_lbm_grid grid;
-
-  /* Calculate total size needed for all arrays */
-  size_t totalSize =
-      nSites * sizeof(float) * 12 /* 12 double arrays      */
-      + nSites * sizeof(int);     /* 1 int array (barrier) */
-
-  void *block = malloc(totalSize);
-  char *ptr = (char *)block;
-
-  grid.xdim = xdim;
-  grid.ydim = ydim;
-
-  grid.n0 = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.nN = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.nS = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.nE = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.nW = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.nNE = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.nSE = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.nNW = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.nSW = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.rho = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.ux = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.uy = (float *)ptr;
-  ptr += nSites * sizeof(float);
-  grid.barrier = (int *)ptr;
-  ptr += nSites * sizeof(int);
-
-  cfd_memset(grid.barrier, 0, (unsigned long)(nSites * sizeof(int)));
-
+  cfd_lbm_init_grid(&grid, memory, xdim, ydim);
   cfd_lbm_init_fluid(&grid, speedSlider);
   cfd_lbm_init_barriers(&grid);
 
@@ -460,7 +411,7 @@ int main(void)
   printf("Simulation finished.\n");
 
   /* --- CLEANUP --- */
-  free(block);
+  free(memory);
   free(combined_buffer);
 
   return 0;

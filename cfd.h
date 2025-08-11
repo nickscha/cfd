@@ -103,6 +103,52 @@ typedef struct cfd_lbm_grid
 
 } cfd_lbm_grid;
 
+CFD_API CFD_INLINE unsigned long cfd_lbm_grid_memory_size(int xdim, int ydim)
+{
+  unsigned long nSites = (unsigned long)(xdim * ydim);
+
+  return (
+      nSites * sizeof(float) * 12 /* 12 double arrays      */
+      + nSites * sizeof(int)      /* 1 int array (barrier) */
+  );
+}
+
+CFD_API CFD_INLINE void cfd_lbm_init_grid(cfd_lbm_grid *grid, void *memory, int xdim, int ydim)
+{
+  char *ptr = (char *)memory;
+
+  unsigned long nSites = (unsigned long)(xdim * ydim);
+
+  grid->xdim = xdim;
+  grid->ydim = ydim;
+  grid->n0 = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->nN = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->nS = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->nE = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->nW = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->nNE = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->nSE = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->nNW = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->nSW = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->rho = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->ux = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->uy = (float *)ptr;
+  ptr += nSites * sizeof(float);
+  grid->barrier = (int *)ptr;
+  ptr += nSites * sizeof(int);
+}
+
 /* This function places barriers on the grid. */
 CFD_API CFD_INLINE void cfd_lbm_init_barriers(cfd_lbm_grid *grid)
 {
@@ -115,6 +161,10 @@ CFD_API CFD_INLINE void cfd_lbm_init_barriers(cfd_lbm_grid *grid)
     if (x >= 0 && x < grid->xdim && y >= 0 && y < grid->ydim)
     {
       grid->barrier[x + y * grid->xdim] = 1;
+    }
+    else
+    {
+      grid->barrier[x + y * grid->xdim] = 0;
     }
   }
 }
