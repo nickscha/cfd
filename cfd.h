@@ -107,7 +107,7 @@ typedef struct cfd_lbm_grid
 CFD_API CFD_INLINE void cfd_lbm_init_barriers(cfd_lbm_grid *grid)
 {
   int barrierSize = 8;
-  int x = (int)(grid->ydim / 3);
+  int x = (int)(grid->xdim / 3);
   int y;
 
   for (y = (grid->ydim / 2) - barrierSize; y <= (grid->ydim / 2) + barrierSize; ++y)
