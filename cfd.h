@@ -118,33 +118,34 @@ CFD_API CFD_INLINE void cfd_lbm_init_grid(cfd_lbm_grid *grid, void *memory, int 
   char *ptr = (char *)memory;
 
   unsigned long nSites = (unsigned long)(xdim * ydim);
+  unsigned long sizeFloat = sizeof(float);
 
   grid->xdim = xdim;
   grid->ydim = ydim;
   grid->n0 = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->nN = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->nS = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->nE = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->nW = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->nNE = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->nSE = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->nNW = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->nSW = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->rho = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->ux = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->uy = (float *)ptr;
-  ptr += nSites * sizeof(float);
+  ptr += nSites * sizeFloat;
   grid->barrier = (int *)ptr;
   ptr += nSites * sizeof(int);
 }

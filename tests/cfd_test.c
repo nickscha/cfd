@@ -14,6 +14,7 @@ LICENSE
 #include "../cfd_platform_write.h" /* Optional: OS-Specific write file implementations */
 #include "cfd_math.h"              /* Math functions to replace math.h                 */
 #include "test.h"                  /* Simple Testing framework                         */
+#include "perf.h"                  /* Simple Performance profiler                      */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,7 +28,50 @@ typedef struct cfd_cfd_pixel_color_color
 
 } cfd_pixel_color;
 
-void cfd_lbm_draw_line(cfd_pixel_color *buffer, int full_width, int y_offset, int plot_height, int x0, int y0, int x1, int y1, cfd_pixel_color color)
+/* Build once at startup */
+static cfd_pixel_color cfd_color_map[401]; /* 0..400; use index -1 for barrier separately */
+
+CFD_API CFD_INLINE void cfd_build_colormap(void)
+{
+  int i;
+  for (i = 0; i <= 400; ++i)
+  {
+    cfd_pixel_color color;
+    if (i < 50)
+    {
+      color.r = 0;
+      color.g = 0;
+      color.b = (unsigned char)(((float)(255 * (i + 50))) / 100.0f);
+    }
+    else if (i < 150)
+    {
+      color.r = 0;
+      color.g = (unsigned char)(((float)(255 * (i - 50))) / 100.0f);
+      color.b = 255;
+    }
+    else if (i < 250)
+    {
+      color.r = (unsigned char)(((float)(255 * (i - 150))) / 100.0f);
+      color.g = 255;
+      color.b = 255 - color.r;
+    }
+    else if (i < 350)
+    {
+      color.r = 255;
+      color.g = (unsigned char)(((float)(255 * (350 - i))) / 100.0f);
+      color.b = 0;
+    }
+    else
+    {
+      color.r = (unsigned char)(((float)(255 * (450 - i))) / 100.0f);
+      color.g = 0;
+      color.b = 0;
+    }
+    cfd_color_map[i] = color;
+  }
+}
+
+CFD_API CFD_INLINE void cfd_lbm_draw_line(cfd_pixel_color *buffer, int full_width, int y_offset, int plot_height, int x0, int y0, int x1, int y1, cfd_pixel_color color)
 {
   /* Simple Bresenham's line algorithm */
   int dx = cfd_abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
@@ -65,7 +109,7 @@ void cfd_lbm_draw_line(cfd_pixel_color *buffer, int full_width, int y_offset, in
   }
 }
 
-void cfd_lbm_draw_tracers(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int full_width, int y_offset, int pxPerSquare)
+CFD_API CFD_INLINE void cfd_lbm_draw_tracers(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int full_width, int y_offset, int pxPerSquare)
 {
   cfd_pixel_color color = {150, 150, 150};
   int plot_height = grid->ydim * pxPerSquare;
@@ -93,7 +137,7 @@ void cfd_lbm_draw_tracers(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int full_
   }
 }
 
-void cfd_lbm_draw_flowlines(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int full_width, int y_offset, int pxPerSquare)
+CFD_API CFD_INLINE void cfd_lbm_draw_flowlines(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int full_width, int y_offset, int pxPerSquare)
 {
   int plot_height = grid->ydim * pxPerSquare;
   float sitesPerFlowline = 10.0f / (float)pxPerSquare;
@@ -127,7 +171,7 @@ void cfd_lbm_draw_flowlines(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int ful
   }
 }
 
-void cfd_lbm_draw_force_arrow(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int full_width, int y_offset, int pxPerSquare)
+CFD_API CFD_INLINE void cfd_lbm_draw_force_arrow(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int full_width, int y_offset, int pxPerSquare)
 {
 
   float x = grid->barrierxSum / (float)grid->barrierCount;
@@ -173,7 +217,7 @@ void cfd_lbm_draw_force_arrow(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int f
   cfd_lbm_draw_line(buffer, full_width, y_offset, plot_height, x2, y2, xA2, yA2, color);
 }
 
-void cfd_lbm_draw_single_plot(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int width, int y_offset, int plotType, float contrast, int pxPerSquare, int tracerCheck, int flowlineCheck, int forceCheck)
+CFD_API CFD_INLINE void cfd_lbm_draw_single_plot(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int width, int y_offset, int plotType, float contrast, int pxPerSquare, int tracerCheck, int flowlineCheck, int forceCheck)
 {
   float contrastFactor = cfd_powf(1.2f, contrast);
   int y;
@@ -233,11 +277,8 @@ void cfd_lbm_draw_single_plot(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int w
         value = value * contrastFactor + 0.5f;
       }
 
-      cIndex = (int)(400 * value);
-      if (value == -1.0f)
-      {
-        cIndex = -1;
-      }
+      cIndex = value == -1.0f ? -1 : (int)(400 * value);
+
       if (cIndex < 0 && cIndex != -1)
       {
         cIndex = 0;
@@ -255,47 +296,17 @@ void cfd_lbm_draw_single_plot(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int w
       }
       else
       {
-
-        if (cIndex < 50)
-        {
-          color.r = 0;
-          color.g = 0;
-          color.b = (unsigned char)((float)(255 * (cIndex + 50)) / 100.0f);
-        }
-        else if (cIndex < 150)
-        {
-          color.r = 0;
-          color.g = (unsigned char)((float)(255 * (cIndex - 50)) / 100.0f);
-          color.b = 255;
-        }
-        else if (cIndex < 250)
-        {
-          color.r = (unsigned char)((float)(255 * (cIndex - 150)) / 100.0f);
-          color.g = 255;
-          color.b = (unsigned char)(255 - color.r);
-        }
-        else if (cIndex < 350)
-        {
-          color.r = 255;
-          color.g = (unsigned char)((float)(255 * (350 - cIndex)) / 100.0f);
-          color.b = 0;
-        }
-        else
-        {
-          color.r = (unsigned char)((float)(255 * (450 - cIndex)) / 100.0f);
-          color.g = 0;
-          color.b = 0;
-        }
+        color = cfd_color_map[cIndex];
       }
 
       /* Color the square in the buffer */
       {
         int flippedy = grid->ydim - y - 1;
         int py;
-        for (py = flippedy * pxPerSquare; py < (flippedy + 1) * pxPerSquare; py++)
+        for (py = flippedy * pxPerSquare; py < (flippedy + 1) * pxPerSquare; ++py)
         {
           int px;
-          for (px = x * pxPerSquare; px < (x + 1) * pxPerSquare; px++)
+          for (px = x * pxPerSquare; px < (x + 1) * pxPerSquare; ++px)
           {
             buffer[px + (py + y_offset) * width] = color;
           }
@@ -319,7 +330,7 @@ void cfd_lbm_draw_single_plot(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int w
   }
 }
 
-void cfd_write_combined_ppm(const char *filename, cfd_pixel_color *buffer, int width, int total_height)
+CFD_API CFD_INLINE void cfd_write_combined_ppm(const char *filename, cfd_pixel_color *buffer, int width, int total_height)
 {
   FILE *fp = fopen(filename, "wb");
   if (!fp)
@@ -331,8 +342,6 @@ void cfd_write_combined_ppm(const char *filename, cfd_pixel_color *buffer, int w
   (void)fwrite(buffer, sizeof(cfd_pixel_color), (size_t)(width * total_height), fp);
   (void)fclose(fp);
 }
-
-#include "perf.h"
 
 int main(void)
 {
@@ -363,6 +372,8 @@ int main(void)
   int total_height;
   cfd_pixel_color *combined_buffer;
   int frame;
+
+  cfd_build_colormap();
 
   cfd_lbm_init_grid(&grid, memory, xdim, ydim);
   cfd_lbm_init_fluid(&grid, speedSlider);
