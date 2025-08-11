@@ -112,7 +112,7 @@ CFD_API CFD_INLINE unsigned long cfd_lbm_grid_memory_size(int xdim, int ydim)
   unsigned long nSites = (unsigned long)(xdim * ydim);
 
   return (
-      nSites * sizeof(float) * 12 /* 12 double arrays      */
+      nSites * sizeof(float) * 12 /* 12 float arrays      */
       + nSites * sizeof(int)      /* 1 int array (barrier) */
   );
 }
@@ -206,10 +206,10 @@ CFD_API CFD_INLINE void cfd_lbm_init_equilibrium(cfd_lbm_grid *grid, int x, int 
 CFD_API CFD_INLINE void cfd_lbm_init_fluid(cfd_lbm_grid *grid, float u0)
 {
   int y;
-  for (y = 0; y < grid->ydim; y++)
+  for (y = 0; y < grid->ydim; ++y)
   {
     int x;
-    for (x = 0; x < grid->xdim; x++)
+    for (x = 0; x < grid->xdim; ++x)
     {
       cfd_lbm_init_equilibrium(grid, x, y, u0, 0.0f, 1.0f);
     }
@@ -238,7 +238,7 @@ CFD_API CFD_INLINE void cfd_lbm_init_tracers(cfd_lbm_grid *grid)
   nextX = dx / 2.0f;
   nextY = dy / 2.0f;
 
-  for (t = 0; t < CFD_LBM_NUMBER_TRACERS; t++)
+  for (t = 0; t < CFD_LBM_NUMBER_TRACERS; ++t)
   {
     grid->tracerX[t] = nextX;
     grid->tracerY[t] = nextY;
@@ -440,7 +440,10 @@ CFD_API CFD_INLINE float cfd_lbm_calculate_wall_shear_stress(cfd_lbm_grid *grid,
 {
   float shear = 0.0f;
 
-  if (grid->barrier[x - 1 + y * grid->xdim] || grid->barrier[x + 1 + y * grid->xdim] || grid->barrier[x + (y - 1) * grid->xdim] || grid->barrier[x + (y + 1) * grid->xdim])
+  if (grid->barrier[x - 1 + y * grid->xdim] ||
+      grid->barrier[x + 1 + y * grid->xdim] ||
+      grid->barrier[x + (y - 1) * grid->xdim] ||
+      grid->barrier[x + (y + 1) * grid->xdim])
   {
     shear = grid->nE[x + y * grid->xdim] + grid->nNE[x + y * grid->xdim] + grid->nSE[x + y * grid->xdim] -
             grid->nW[x + y * grid->xdim] - grid->nNW[x + y * grid->xdim] - grid->nSW[x + y * grid->xdim];
