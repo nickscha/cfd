@@ -164,20 +164,31 @@ CFD_API CFD_INLINE void cfd_lbm_init_fluid(cfd_lbm_grid *grid, float u0)
 /* Place tracers in a grid formation. */
 CFD_API CFD_INLINE void cfd_lbm_init_tracers(cfd_lbm_grid *grid)
 {
-  int nRows = (int)cfd_sqrtf((float)CFD_LBM_NUMBER_TRACERS);
-  float dx = (float)grid->xdim / (float)nRows;
-  float dy = (float)grid->ydim / (float)nRows;
-  float nextX = dx / 2.0f;
-  float nextY = dy / 2.0f;
+  int nRows = (int)(cfd_sqrtf((float)CFD_LBM_NUMBER_TRACERS) + 0.5f);
+
+  float dx;
+  float dy;
+  float nextX;
+  float nextY;
 
   int t;
+
+  if (nRows <= 0)
+  {
+    nRows = 1;
+  }
+
+  dx = (float)grid->xdim / (float)nRows;
+  dy = (float)grid->ydim / (float)nRows;
+  nextX = dx / 2.0f;
+  nextY = dy / 2.0f;
 
   for (t = 0; t < CFD_LBM_NUMBER_TRACERS; t++)
   {
     grid->tracerX[t] = nextX;
     grid->tracerY[t] = nextY;
     nextX += dx;
-    if (nextX > (float)grid->xdim)
+    if (nextX >= (float)grid->xdim)
     {
       nextX = dx / 2.0f;
       nextY += dy;
