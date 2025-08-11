@@ -188,11 +188,6 @@ void cfd_lbm_draw_single_plot(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int w
   float contrastFactor = cfd_powf(1.2f, contrast);
   int y;
 
-  if (plotType == 4)
-  {
-    cfd_lbm_compute_curl(grid);
-  }
-
   /* Step 1: Draw the main fluid plot */
   for (y = 0; y < grid->ydim; y++)
   {
@@ -227,7 +222,8 @@ void cfd_lbm_draw_single_plot(cfd_pixel_color *buffer, cfd_lbm_grid *grid, int w
           break;
         }
         case 4:
-          value = grid->curl[x + y * grid->xdim] * 5.0f;
+          value = grid->uy[x + 1 + y * grid->xdim] - grid->uy[x - 1 + y * grid->xdim] - grid->ux[x + (y + 1) * grid->xdim] + grid->ux[x + (y - 1) * grid->xdim];
+          value = value * 5.0f;
           break;
         case 5:
           value = (grid->rho[x + y * grid->xdim] - 1.0f) * 20.0f;
@@ -380,7 +376,7 @@ int main(void)
 
   /* Calculate total size needed for all arrays */
   size_t totalSize =
-      nSites * sizeof(float) * 13 /* 13 double arrays      */
+      nSites * sizeof(float) * 12 /* 12 double arrays      */
       + nSites * sizeof(int);     /* 1 int array (barrier) */
 
   void *block = malloc(totalSize);
@@ -413,8 +409,6 @@ int main(void)
   ptr += nSites * sizeof(float);
   grid.uy = (float *)ptr;
   ptr += nSites * sizeof(float);
-  grid.curl = (float *)ptr;
-  ptr += nSites * sizeof(float);
   grid.barrier = (int *)ptr;
   ptr += nSites * sizeof(int);
 
@@ -422,6 +416,7 @@ int main(void)
 
   cfd_lbm_init_fluid(&grid, speedSlider);
   cfd_lbm_init_barriers(&grid);
+
   if (tracerCheck)
   {
     cfd_lbm_init_tracers(&grid);
@@ -450,8 +445,6 @@ int main(void)
         cfd_lbm_move_tracers(&grid);
       }
     } }, "lbm_frame_step");
-
-    cfd_lbm_compute_curl(&grid);
 
     /* Loop through all plot types and draw them into the combined buffer */
     for (plot_type = 0; plot_type < num_plots; ++plot_type)

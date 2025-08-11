@@ -88,7 +88,7 @@ typedef struct cfd_lbm_grid
   /* Particle distributions */
   float *n0, *nN, *nS, *nE, *nW, *nNE, *nSE, *nNW, *nSW;
 
-  float *rho, *ux, *uy, *curl;
+  float *rho, *ux, *uy;
 
   int *barrier;
 
@@ -157,7 +157,6 @@ CFD_API CFD_INLINE void cfd_lbm_init_fluid(cfd_lbm_grid *grid, float u0)
     for (x = 0; x < grid->xdim; x++)
     {
       cfd_lbm_init_equilibrium(grid, x, y, u0, 0.0f, 1.0f);
-      grid->curl[x + y * grid->xdim] = 0.0f;
     }
   }
 }
@@ -333,19 +332,6 @@ CFD_API CFD_INLINE void cfd_lbm_move_tracers(cfd_lbm_grid *grid)
     {
       grid->tracerX[t] = 0.0f;
       grid->tracerY[t] = (float)cfd_rand() / (float)CFD_RAND_MAX * (float)grid->ydim;
-    }
-  }
-}
-
-CFD_API CFD_INLINE void cfd_lbm_compute_curl(cfd_lbm_grid *grid)
-{
-  int y;
-  for (y = 1; y < grid->ydim - 1; ++y)
-  {
-    int x;
-    for (x = 1; x < grid->xdim - 1; ++x)
-    {
-      grid->curl[x + y * grid->xdim] = grid->uy[x + 1 + y * grid->xdim] - grid->uy[x - 1 + y * grid->xdim] - grid->ux[x + (y + 1) * grid->xdim] + grid->ux[x + (y - 1) * grid->xdim];
     }
   }
 }
