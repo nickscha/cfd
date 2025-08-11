@@ -331,7 +331,7 @@ CFD_API CFD_INLINE void cfd_lbm_move_tracers(cfd_lbm_grid *grid)
     if (grid->tracerX[t] > (float)(grid->xdim - 1))
     {
       grid->tracerX[t] = 0.0f;
-      grid->tracerY[t] = (float)cfd_rand() / (float)CFD_RAND_MAX * (float)grid->ydim;
+      grid->tracerY[t] = (float)cfd_rand() / (float)(CFD_RAND_MAX + 1U) * (float)grid->ydim;
     }
   }
 }
