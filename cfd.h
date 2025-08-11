@@ -30,10 +30,10 @@ LICENSE
 #define CFD_API static
 #endif
 
-#define CFD_STATIC_ASSERT(c, m) typedef char types_assert_##m[(c) ? 1 : -1]
-
-CFD_STATIC_ASSERT(sizeof(unsigned char) == 1, unsigned_char_size_must_be_1);
-
+/* #############################################################################
+ * # MATH Functions
+ * #############################################################################
+ */
 #define CFD_RAND_MAX 32767
 
 static unsigned long cfd_rand_next = 1234;
@@ -75,6 +75,10 @@ CFD_API CFD_INLINE float cfd_sqrtf(float x)
   return guess;
 }
 
+/* #############################################################################
+ * # LBM D2Q9 Model
+ * #############################################################################
+ */
 #define CFD_LBM_FOUR_NINTHS (4.0f / 9.0f)
 #define CFD_LBM_ONE_NINTH (1.0f / 9.0f)
 #define CFD_LBM_ONE_36TH (1.0f / 36.0f)
@@ -396,6 +400,53 @@ CFD_API CFD_INLINE void cfd_lbm_move_tracers(cfd_lbm_grid *grid)
       grid->tracerY[t] = (float)cfd_rand() / (float)(CFD_RAND_MAX + 1U) * (float)grid->ydim;
     }
   }
+}
+
+/* #############################################################################
+ * # LBM D2Q9 plot value calculations
+ * #############################################################################
+ */
+CFD_API CFD_INLINE float cfd_lbm_calculate_density(cfd_lbm_grid *grid, int x, int y)
+{
+  return (grid->rho[x + y * grid->xdim] - 1.0f) * 6.0f;
+}
+
+CFD_API CFD_INLINE float cfd_lbm_calculate_velocity_x(cfd_lbm_grid *grid, int x, int y)
+{
+  return grid->ux[x + y * grid->xdim] * 2.0f;
+}
+
+CFD_API CFD_INLINE float cfd_lbm_calculate_velocity_y(cfd_lbm_grid *grid, int x, int y)
+{
+  return grid->uy[x + y * grid->xdim] * 2.0f;
+}
+
+CFD_API CFD_INLINE float cfd_lbm_calculate_speed(cfd_lbm_grid *grid, int x, int y)
+{
+  return cfd_sqrtf(grid->ux[x + y * grid->xdim] * grid->ux[x + y * grid->xdim] + grid->uy[x + y * grid->xdim] * grid->uy[x + y * grid->xdim]) * 4.0f;
+}
+
+CFD_API CFD_INLINE float cfd_lbm_calculate_curl(cfd_lbm_grid *grid, int x, int y)
+{
+  return (grid->uy[x + 1 + y * grid->xdim] - grid->uy[x - 1 + y * grid->xdim] - grid->ux[x + (y + 1) * grid->xdim] + grid->ux[x + (y - 1) * grid->xdim]) * 5.0f;
+}
+
+CFD_API CFD_INLINE float cfd_lbm_calculate_pressure(cfd_lbm_grid *grid, int x, int y)
+{
+  return (grid->rho[x + y * grid->xdim] - 1.0f) * 20.0f;
+}
+
+CFD_API CFD_INLINE float cfd_lbm_calculate_wall_shear_stress(cfd_lbm_grid *grid, int x, int y)
+{
+  float shear = 0.0f;
+
+  if (grid->barrier[x - 1 + y * grid->xdim] || grid->barrier[x + 1 + y * grid->xdim] || grid->barrier[x + (y - 1) * grid->xdim] || grid->barrier[x + (y + 1) * grid->xdim])
+  {
+    shear = grid->nE[x + y * grid->xdim] + grid->nNE[x + y * grid->xdim] + grid->nSE[x + y * grid->xdim] -
+            grid->nW[x + y * grid->xdim] - grid->nNW[x + y * grid->xdim] - grid->nSW[x + y * grid->xdim];
+  }
+
+  return shear * 10.0f;
 }
 
 #endif /* CFD_H */

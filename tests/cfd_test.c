@@ -223,10 +223,10 @@ CFD_API CFD_INLINE void cfd_lbm_draw_single_plot(cfd_pixel_color *buffer, cfd_lb
   int y;
 
   /* Step 1: Draw the main fluid plot */
-  for (y = 0; y < grid->ydim; y++)
+  for (y = 0; y < grid->ydim; ++y)
   {
     int x;
-    for (x = 0; x < grid->xdim; x++)
+    for (x = 0; x < grid->xdim; ++x)
     {
       float value = 0.0f;
       int cIndex;
@@ -241,38 +241,26 @@ CFD_API CFD_INLINE void cfd_lbm_draw_single_plot(cfd_pixel_color *buffer, cfd_lb
         switch (plotType)
         {
         case 0:
-          value = (grid->rho[x + y * grid->xdim] - 1.0f) * 6.0f;
+          value = cfd_lbm_calculate_density(grid, x, y);
           break;
         case 1:
-          value = grid->ux[x + y * grid->xdim] * 2.0f;
+          value = cfd_lbm_calculate_velocity_x(grid, x, y);
           break;
         case 2:
-          value = grid->uy[x + y * grid->xdim] * 2.0f;
+          value = cfd_lbm_calculate_velocity_y(grid, x, y);
           break;
         case 3:
-        {
-          float speed = cfd_sqrtf(grid->ux[x + y * grid->xdim] * grid->ux[x + y * grid->xdim] + grid->uy[x + y * grid->xdim] * grid->uy[x + y * grid->xdim]);
-          value = speed * 4.0f;
+          value = cfd_lbm_calculate_speed(grid, x, y);
           break;
-        }
         case 4:
-          value = grid->uy[x + 1 + y * grid->xdim] - grid->uy[x - 1 + y * grid->xdim] - grid->ux[x + (y + 1) * grid->xdim] + grid->ux[x + (y - 1) * grid->xdim];
-          value = value * 5.0f;
+          value = cfd_lbm_calculate_curl(grid, x, y);
           break;
         case 5:
-          value = (grid->rho[x + y * grid->xdim] - 1.0f) * 20.0f;
+          value = cfd_lbm_calculate_pressure(grid, x, y);
           break;
         case 6:
-        {
-          float shear = 0.0f;
-          if (grid->barrier[x - 1 + y * grid->xdim] || grid->barrier[x + 1 + y * grid->xdim] || grid->barrier[x + (y - 1) * grid->xdim] || grid->barrier[x + (y + 1) * grid->xdim])
-          {
-            shear = grid->nE[x + y * grid->xdim] + grid->nNE[x + y * grid->xdim] + grid->nSE[x + y * grid->xdim] -
-                    grid->nW[x + y * grid->xdim] - grid->nNW[x + y * grid->xdim] - grid->nSW[x + y * grid->xdim];
-          }
-          value = shear * 10.0f;
+          value = cfd_lbm_calculate_wall_shear_stress(grid, x, y);
           break;
-        }
         }
         value = value * contrastFactor + 0.5f;
       }
