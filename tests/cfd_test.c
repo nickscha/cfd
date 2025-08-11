@@ -20,7 +20,7 @@ LICENSE
 #include <stdio.h>
 
 /* Structure to hold a single cfd_pixel_color's color data */
-typedef struct cfd_cfd_pixel_color_color
+typedef struct cfd_pixel_color
 {
   unsigned char r;
   unsigned char g;
