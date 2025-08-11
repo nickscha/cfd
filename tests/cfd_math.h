@@ -107,22 +107,12 @@ CFD_MATH_API CFD_MATH_INLINE float cfd_atan2f(float y, float x)
     return -PI / 2.0f;
   return 0.0f;
 }
-
-CFD_MATH_API CFD_MATH_INLINE float cfd_floorf(float x)
-{
-  int i = (int)x;
-  if (x < (float)i)
-  {
-    return (float)(i - 1);
-  }
-  return (float)i;
-}
-
 CFD_MATH_API CFD_MATH_INLINE float cfd_powf(float base, float exp)
 {
   /* Only handles positive base for now */
   int i;
   float result = 1.0f;
+  int e;
 
   if (exp == 0.0f)
   {
@@ -133,16 +123,12 @@ CFD_MATH_API CFD_MATH_INLINE float cfd_powf(float base, float exp)
     return base;
   }
 
-  /*
-   * Check if exp is an integer.
-   * This is a robust check, but the original logic also worked for this specific use case.
-   */
-  if (cfd_floorf(exp) == exp)
+  /* Check if exponent is an integer (epsilon to avoid FP edge cases) */
+  e = (int)exp;
+
+  if ((float)e == exp)
   {
     /* Integer exponent */
-    int e = (int)exp;
-
-    /* Handle positive exponents */
     if (e > 0)
     {
       for (i = 0; i < e; ++i)
@@ -151,20 +137,16 @@ CFD_MATH_API CFD_MATH_INLINE float cfd_powf(float base, float exp)
       }
       return result;
     }
-    /* Handle negative exponents */
     else if (e < 0)
     {
-      /* Use the absolute value of the exponent for the loop */
-      int positive_e = (e > 0) ? e : -e;
+      int positive_e = -e;
       for (i = 0; i < positive_e; ++i)
       {
         result *= base;
       }
-      /* Check for division by zero */
       if (result == 0.0f)
       {
-        /* Return an appropriate value for a math error */
-        return 0.0f;
+        return 0.0f; /* Math error: division by zero */
       }
       return 1.0f / result;
     }
@@ -174,7 +156,7 @@ CFD_MATH_API CFD_MATH_INLINE float cfd_powf(float base, float exp)
     }
   }
 
-  /* Exponent is not an integer. Return -1.0f as originally implemented. */
+  /* Non-integer exponent (fractional powers not implemented yet) */
   return -1.0f;
 }
 
