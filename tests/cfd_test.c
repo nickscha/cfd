@@ -10,13 +10,11 @@ LICENSE
   See end of file for detailed license information.
 
 */
-#include "../cfd.h"                /* Computational Fluid Dynamics API                 */
-#include "../cfd_platform_write.h" /* Optional: OS-Specific write file implementations */
-#include "cfd_math.h"              /* Math functions to replace math.h                 */
-#include "test.h"                  /* Simple Testing framework                         */
-#include "perf.h"                  /* Simple Performance profiler                      */
-#include <stdlib.h>                /* malloc/free                                      */
+#include <stdlib.h> /* malloc/free                                      */
 #include <stdio.h>
+#include "../cfd.h"                /* Computational Fluid Dynamics API                 */
+#include "cfd_math.h"              /* Math functions to replace math.h                 */
+#include "perf.h"                  /* Simple Performance profiler                      */
 
 /* Structure to hold a single cfd_pixel_color's color data */
 typedef struct cfd_pixel_color
@@ -343,7 +341,7 @@ int main(void)
   int tracerCheck = 1;         /* tracerCheck (0=off, 1=on) */
   int flowlineCheck = 1;       /* flowlineCheck (0=off, 1=on) */
   int forceCheck = 1;          /* forceCheck (0=off, 1=on) */
-  int frameCount = 250;          /* Number of frames to generate */
+  int frameCount = 250;        /* Number of frames to generate */
 
   /* --- SETUP --- */
   int xdim = 600 / pxPerSquare;
