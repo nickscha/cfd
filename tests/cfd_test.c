@@ -400,7 +400,7 @@ int main(void)
       cfd_lbm_draw_single_plot(combined_buffer, &grid, width_per_plot, y_offset, plot_type, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
     }
 
-    snprintf(filename, sizeof(filename), "frame_%05d.ppm", frame);
+    sprintf(filename, "frame_%05d.ppm", frame);
     PERF_PROFILE_WITH_NAME(cfd_write_combined_ppm(filename, combined_buffer, width_per_plot, total_height), "lbm_draw_canvas");
   }
 
