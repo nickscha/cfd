@@ -4,5 +4,6 @@ set DEF_FLAGS_COMPILER=-std=c89 -march=native -mtune=native -pedantic -Wall -Wex
 set DEF_FLAGS_LINKER=
 set SOURCE_NAME=cfd_test
 
+rm *.ppm
 cc -s -O3 %DEF_FLAGS_COMPILER% -o %SOURCE_NAME%.exe %SOURCE_NAME%.c %DEF_FLAGS_LINKER%
 %SOURCE_NAME%.exe

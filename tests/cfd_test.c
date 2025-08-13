@@ -342,7 +342,7 @@ int main(void)
   int tracerCheck = 1;         /* tracerCheck (0=off, 1=on) */
   int flowlineCheck = 1;       /* flowlineCheck (0=off, 1=on) */
   int forceCheck = 1;          /* forceCheck (0=off, 1=on) */
-  int frameCount = 1000;       /* Number of frames to generate */
+  int frameCount = 250;          /* Number of frames to generate */
 
   /* --- SETUP --- */
   int xdim = 600 / pxPerSquare;
@@ -350,7 +350,7 @@ int main(void)
 
   void *memory = malloc(cfd_lbm_grid_memory_size(xdim, ydim));
 
-  cfd_lbm_grid grid;
+  cfd_lbm_grid grid = {0};
 
   /* --- SETUP FOR COMBINED PLOTS --- */
   int width_per_plot;
@@ -401,7 +401,7 @@ int main(void)
       cfd_lbm_draw_single_plot(combined_buffer, &grid, width_per_plot, y_offset, plot_type, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
     }
 
-    sprintf(filename, "frame_%05d.ppm", frame);
+    snprintf(filename, sizeof(filename), "frame_%05d.ppm", frame);
     PERF_PROFILE_WITH_NAME(cfd_write_combined_ppm(filename, combined_buffer, width_per_plot, total_height), "lbm_draw_canvas");
   }
 

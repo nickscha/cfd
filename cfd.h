@@ -87,8 +87,18 @@ CFD_API CFD_INLINE float cfd_sqrtf(float x)
 /* Structure to hold all the grid data for the LBM simulation */
 typedef struct cfd_lbm_grid
 {
+  /* Grid size */
   int xdim;
   int ydim;
+
+  /* Force data */
+  float barrierFx, barrierFy;
+  int barrierCount;
+  float barrierxSum, barrierySum;
+
+  /* Tracer data */
+  float tracerX[CFD_LBM_NUMBER_TRACERS];
+  float tracerY[CFD_LBM_NUMBER_TRACERS];
 
   /* Particle distributions */
   float *n0, *nN, *nS, *nE, *nW, *nNE, *nSE, *nNW, *nSW;
@@ -96,15 +106,6 @@ typedef struct cfd_lbm_grid
   float *rho, *ux, *uy;
 
   int *barrier;
-
-  /* Tracer data */
-  float tracerX[CFD_LBM_NUMBER_TRACERS];
-  float tracerY[CFD_LBM_NUMBER_TRACERS];
-
-  /* Force data */
-  float barrierFx, barrierFy;
-  int barrierCount;
-  float barrierxSum, barrierySum;
 
 } cfd_lbm_grid;
 
@@ -167,10 +168,6 @@ CFD_API CFD_INLINE void cfd_lbm_init_barriers(cfd_lbm_grid *grid)
     if (x >= 0 && x < grid->xdim && y >= 0 && y < grid->ydim)
     {
       grid->barrier[x + y * grid->xdim] = 1;
-    }
-    else
-    {
-      grid->barrier[x + y * grid->xdim] = 0;
     }
   }
 }
