@@ -10,11 +10,11 @@ LICENSE
   See end of file for detailed license information.
 
 */
-#include <stdlib.h> /* malloc/free                                      */
+#include "../cfd.h"   /* Computational Fluid Dynamics API */
+#include "cfd_math.h" /* Math functions to replace math.h */
+#include "perf.h"     /* Simple performance profiler      */
+#include <stdlib.h>   /* malloc/free                      */
 #include <stdio.h>
-#include "../cfd.h"                /* Computational Fluid Dynamics API                 */
-#include "cfd_math.h"              /* Math functions to replace math.h                 */
-#include "perf.h"                  /* Simple Performance profiler                      */
 
 /* Structure to hold a single cfd_pixel_color's color data */
 typedef struct cfd_pixel_color
@@ -315,9 +315,14 @@ CFD_API CFD_INLINE void cfd_lbm_draw_single_plot(cfd_pixel_color *buffer, cfd_lb
   }
 }
 
-CFD_API CFD_INLINE void cfd_write_combined_ppm(const char *filename, cfd_pixel_color *buffer, int width, int total_height)
+CFD_API CFD_INLINE void cfd_write_combined_ppm(cfd_pixel_color *buffer, int width, int total_height, int frame)
 {
-  FILE *fp = fopen(filename, "wb");
+  char filename[32];
+  FILE *fp;
+
+  sprintf(filename, "frame_%05d.ppm", frame);
+
+  fp = fopen(filename, "wb");
   if (!fp)
   {
     free(buffer);
@@ -341,7 +346,7 @@ int main(void)
   int tracerCheck = 1;         /* tracerCheck (0=off, 1=on) */
   int flowlineCheck = 1;       /* flowlineCheck (0=off, 1=on) */
   int forceCheck = 1;          /* forceCheck (0=off, 1=on) */
-  int frameCount = 250;        /* Number of frames to generate */
+  int frameCount = 250;          /* Number of frames to generate */
 
   /* --- SETUP --- */
   int xdim = 600 / pxPerSquare;
@@ -379,7 +384,6 @@ int main(void)
   for (frame = 0; frame < frameCount; ++frame)
   {
     int step;
-    char filename[32];
     int plot_type;
 
     PERF_PROFILE_WITH_NAME({
@@ -394,14 +398,14 @@ int main(void)
     } }, "lbm_frame_step");
 
     /* Loop through all plot types and draw them into the combined buffer */
-    for (plot_type = 0; plot_type < num_plots; ++plot_type)
-    {
-      int y_offset = plot_type * height_per_plot;
-      cfd_lbm_draw_single_plot(combined_buffer, &grid, width_per_plot, y_offset, plot_type, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
-    }
+    PERF_PROFILE_WITH_NAME(
+        for (plot_type = 0; plot_type < num_plots; ++plot_type) {
+          int y_offset = plot_type * height_per_plot;
+          cfd_lbm_draw_single_plot(combined_buffer, &grid, width_per_plot, y_offset, plot_type, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
+        },
+        "lbm_draw_plots");
 
-    sprintf(filename, "frame_%05d.ppm", frame);
-    PERF_PROFILE_WITH_NAME(cfd_write_combined_ppm(filename, combined_buffer, width_per_plot, total_height), "lbm_draw_canvas");
+    PERF_PROFILE_WITH_NAME(cfd_write_combined_ppm(combined_buffer, width_per_plot, total_height, frame), "lbm_write_ppm");
   }
 
   printf("Simulation finished.\n");
