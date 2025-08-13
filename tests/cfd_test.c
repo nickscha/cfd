@@ -16,6 +16,7 @@ LICENSE
 #include "test.h"                  /* Simple Testing framework                         */
 #include "perf.h"                  /* Simple Performance profiler                      */
 #include <stdlib.h>                /* malloc/free                                      */
+#include <stdio.h>
 
 /* Structure to hold a single cfd_pixel_color's color data */
 typedef struct cfd_pixel_color
