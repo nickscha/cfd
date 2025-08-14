@@ -101,7 +101,7 @@ typedef struct cfd_lbm_grid
   float tracerY[CFD_LBM_NUMBER_TRACERS];
 
   /* Particle distributions */
-  float *n0, *nN, *nS, *nE, *nW, *nNE, *nSE, *nNW, *nSW;
+  float *nC, *nN, *nS, *nE, *nW, *nNE, *nSE, *nNW, *nSW;
 
   float *rho, *ux, *uy;
 
@@ -128,7 +128,7 @@ CFD_API CFD_INLINE void cfd_lbm_init_grid(cfd_lbm_grid *grid, void *memory, int 
 
   grid->xdim = xdim;
   grid->ydim = ydim;
-  grid->n0 = (float *)ptr;
+  grid->nC = (float *)ptr;
   ptr += nSites * sizeFloat;
   grid->nN = (float *)ptr;
   ptr += nSites * sizeFloat;
@@ -186,7 +186,7 @@ CFD_API CFD_INLINE void cfd_lbm_init_equilibrium(cfd_lbm_grid *grid, int x, int 
   float one9th_newrho = CFD_LBM_ONE_NINTH * newrho;
   float one36th_newrho = CFD_LBM_ONE_36TH * newrho;
 
-  grid->n0[i] = CFD_LBM_FOUR_NINTHS * newrho * (1.0f - u215);
+  grid->nC[i] = CFD_LBM_FOUR_NINTHS * newrho * (1.0f - u215);
   grid->nE[i] = one9th_newrho * (1.0f + ux3 + 4.5f * ux2 - u215);
   grid->nW[i] = one9th_newrho * (1.0f - ux3 + 4.5f * ux2 - u215);
   grid->nN[i] = one9th_newrho * (1.0f + uy3 + 4.5f * uy2 - u215);
@@ -263,7 +263,7 @@ CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, float viscosity)
     for (x = 1; x < grid->xdim - 1; ++x)
     {
       int i = x + y * grid->xdim;
-      float thisrho = grid->n0[i] + grid->nN[i] + grid->nS[i] + grid->nE[i] + grid->nW[i] + grid->nNW[i] + grid->nNE[i] + grid->nSW[i] + grid->nSE[i];
+      float thisrho = grid->nC[i] + grid->nN[i] + grid->nS[i] + grid->nE[i] + grid->nW[i] + grid->nNW[i] + grid->nNE[i] + grid->nSW[i] + grid->nSE[i];
       float invRho = 1.0f / thisrho;
       float thisux = (grid->nE[i] + grid->nNE[i] + grid->nSE[i] - grid->nW[i] - grid->nNW[i] - grid->nSW[i]) * invRho;
       float thisuy = (grid->nN[i] + grid->nNE[i] + grid->nNW[i] - grid->nS[i] - grid->nSE[i] - grid->nSW[i]) * invRho;
@@ -281,7 +281,7 @@ CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, float viscosity)
       grid->ux[i] = thisux;
       grid->uy[i] = thisuy;
 
-      grid->n0[i] += omega * (CFD_LBM_FOUR_NINTHS * thisrho * (1.0f - u215) - grid->n0[i]);
+      grid->nC[i] += omega * (CFD_LBM_FOUR_NINTHS * thisrho * (1.0f - u215) - grid->nC[i]);
       grid->nE[i] += omega * (one9thrho * (1.0f + ux3 + 4.5f * ux2 - u215) - grid->nE[i]);
       grid->nW[i] += omega * (one9thrho * (1.0f - ux3 + 4.5f * ux2 - u215) - grid->nW[i]);
       grid->nN[i] += omega * (one9thrho * (1.0f + uy3 + 4.5f * uy2 - u215) - grid->nN[i]);
