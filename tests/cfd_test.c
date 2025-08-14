@@ -33,16 +33,13 @@ CFD_API CFD_INLINE void cfd_build_colormap(void)
   int i;
   for (i = 0; i <= 400; ++i)
   {
-    cfd_pixel_color color;
+    cfd_pixel_color color = {0};
     if (i < 50)
     {
-      color.r = 0;
-      color.g = 0;
       color.b = (unsigned char)(((float)(255 * (i + 50))) / 100.0f);
     }
     else if (i < 150)
     {
-      color.r = 0;
       color.g = (unsigned char)(((float)(255 * (i - 50))) / 100.0f);
       color.b = 255;
     }
@@ -56,13 +53,10 @@ CFD_API CFD_INLINE void cfd_build_colormap(void)
     {
       color.r = 255;
       color.g = (unsigned char)(((float)(255 * (350 - i))) / 100.0f);
-      color.b = 0;
     }
     else
     {
       color.r = (unsigned char)(((float)(255 * (450 - i))) / 100.0f);
-      color.g = 0;
-      color.b = 0;
     }
     cfd_color_map[i] = color;
   }
