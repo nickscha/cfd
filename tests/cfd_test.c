@@ -347,6 +347,7 @@ int main(void)
   int flowlineCheck = 1;       /* flowlineCheck (0=off, 1=on) */
   int forceCheck = 1;          /* forceCheck (0=off, 1=on) */
   int frameCount = 250;        /* Number of frames to generate */
+  int frame = 0;
 
   /* --- SETUP --- */
   int xdim = 600 / pxPerSquare;
@@ -357,11 +358,10 @@ int main(void)
   cfd_lbm_grid grid = {0};
 
   /* --- SETUP FOR COMBINED PLOTS --- */
-  int width_per_plot;
-  int height_per_plot;
-  int total_height;
-  cfd_pixel_color *combined_buffer;
-  int frame;
+  int width_per_plot = xdim * pxPerSquare;
+  int height_per_plot = ydim * pxPerSquare;
+  int total_height = height_per_plot * num_plots;
+  cfd_pixel_color *combined_buffer = (cfd_pixel_color *)malloc((size_t)(width_per_plot * total_height) * sizeof(cfd_pixel_color));
 
   cfd_build_colormap();
 
@@ -373,11 +373,6 @@ int main(void)
   {
     cfd_lbm_init_tracers(&grid);
   }
-
-  width_per_plot = grid.xdim * pxPerSquare;
-  height_per_plot = grid.ydim * pxPerSquare;
-  total_height = height_per_plot * num_plots;
-  combined_buffer = (cfd_pixel_color *)malloc((size_t)(width_per_plot * total_height) * sizeof(cfd_pixel_color));
 
   /* --- SIMULATION LOOP --- */
   printf("Starting simulation...\n");
@@ -405,7 +400,9 @@ int main(void)
         },
         "lbm_draw_plots");
 
-    PERF_PROFILE_WITH_NAME(cfd_write_combined_ppm(combined_buffer, width_per_plot, total_height, frame), "lbm_write_ppm");
+    PERF_PROFILE_WITH_NAME(
+        cfd_write_combined_ppm(combined_buffer, width_per_plot, total_height, frame),
+        "lbm_write_ppm");
   }
 
   printf("Simulation finished.\n");
