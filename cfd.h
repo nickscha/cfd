@@ -79,13 +79,13 @@ CFD_API CFD_INLINE float cfd_sqrtf(float x)
  * # LBM D2Q9 Model
  * #############################################################################
  */
-#define CFD_LBM_FOUR_NINTHS (4.0f / 9.0f)
-#define CFD_LBM_ONE_NINTH (1.0f / 9.0f)
-#define CFD_LBM_ONE_36TH (1.0f / 36.0f)
-#define CFD_LBM_NUMBER_TRACERS 144
+#define CFD_LBM_2D_FOUR_NINTHS (4.0f / 9.0f)
+#define CFD_LBM_2D_ONE_NINTH (1.0f / 9.0f)
+#define CFD_LBM_2D_ONE_36TH (1.0f / 36.0f)
+#define CFD_LBM_2D_NUMBER_TRACERS 144
 
 /* Structure to hold all the grid data for the LBM simulation */
-typedef struct cfd_lbm_grid
+typedef struct cfd_lbm_2d_grid
 {
   /* Grid size */
   int xdim;
@@ -97,8 +97,8 @@ typedef struct cfd_lbm_grid
   float barrierxSum, barrierySum;
 
   /* Tracer data */
-  float tracerX[CFD_LBM_NUMBER_TRACERS];
-  float tracerY[CFD_LBM_NUMBER_TRACERS];
+  float tracerX[CFD_LBM_2D_NUMBER_TRACERS];
+  float tracerY[CFD_LBM_2D_NUMBER_TRACERS];
 
   /* Particle distributions */
   float *nC, *nN, *nS, *nE, *nW, *nNE, *nSE, *nNW, *nSW;
@@ -107,9 +107,9 @@ typedef struct cfd_lbm_grid
 
   int *barrier;
 
-} cfd_lbm_grid;
+} cfd_lbm_2d_grid;
 
-CFD_API CFD_INLINE unsigned long cfd_lbm_grid_memory_size(int xdim, int ydim)
+CFD_API CFD_INLINE unsigned long cfd_lbm_2d_grid_memory_size(int xdim, int ydim)
 {
   unsigned long nSites = (unsigned long)(xdim * ydim);
 
@@ -119,7 +119,7 @@ CFD_API CFD_INLINE unsigned long cfd_lbm_grid_memory_size(int xdim, int ydim)
   );
 }
 
-CFD_API CFD_INLINE void cfd_lbm_init_grid(cfd_lbm_grid *grid, void *memory, int xdim, int ydim)
+CFD_API CFD_INLINE void cfd_lbm_2d_init_grid(cfd_lbm_2d_grid *grid, void *memory, int xdim, int ydim)
 {
   char *ptr = (char *)memory;
 
@@ -157,7 +157,7 @@ CFD_API CFD_INLINE void cfd_lbm_init_grid(cfd_lbm_grid *grid, void *memory, int 
 }
 
 /* This function places barriers on the grid. */
-CFD_API CFD_INLINE void cfd_lbm_init_barriers(cfd_lbm_grid *grid)
+CFD_API CFD_INLINE void cfd_lbm_2d_init_barriers(cfd_lbm_2d_grid *grid)
 {
   int barrierSize = 8;
   int x = (int)(grid->xdim / 3);
@@ -173,7 +173,7 @@ CFD_API CFD_INLINE void cfd_lbm_init_barriers(cfd_lbm_grid *grid)
 }
 
 /* Set all densities in a cell to their equilibrium values for a given velocity and density. */
-CFD_API CFD_INLINE void cfd_lbm_init_equilibrium(cfd_lbm_grid *grid, int x, int y, float newux, float newuy, float newrho)
+CFD_API CFD_INLINE void cfd_lbm_2d_init_equilibrium(cfd_lbm_2d_grid *grid, int x, int y, float newux, float newuy, float newrho)
 {
   int i = x + y * grid->xdim;
   float ux3 = 3.0f * newux;
@@ -183,10 +183,10 @@ CFD_API CFD_INLINE void cfd_lbm_init_equilibrium(cfd_lbm_grid *grid, int x, int 
   float uxuy2 = 2.0f * newux * newuy;
   float u2 = ux2 + uy2;
   float u215 = 1.5f * u2;
-  float one9th_newrho = CFD_LBM_ONE_NINTH * newrho;
-  float one36th_newrho = CFD_LBM_ONE_36TH * newrho;
+  float one9th_newrho = CFD_LBM_2D_ONE_NINTH * newrho;
+  float one36th_newrho = CFD_LBM_2D_ONE_36TH * newrho;
 
-  grid->nC[i] = CFD_LBM_FOUR_NINTHS * newrho * (1.0f - u215);
+  grid->nC[i] = CFD_LBM_2D_FOUR_NINTHS * newrho * (1.0f - u215);
   grid->nE[i] = one9th_newrho * (1.0f + ux3 + 4.5f * ux2 - u215);
   grid->nW[i] = one9th_newrho * (1.0f - ux3 + 4.5f * ux2 - u215);
   grid->nN[i] = one9th_newrho * (1.0f + uy3 + 4.5f * uy2 - u215);
@@ -201,7 +201,7 @@ CFD_API CFD_INLINE void cfd_lbm_init_equilibrium(cfd_lbm_grid *grid, int x, int 
 }
 
 /* Initialize the fluid to a steady rightward flow. */
-CFD_API CFD_INLINE void cfd_lbm_init_fluid(cfd_lbm_grid *grid, float u0)
+CFD_API CFD_INLINE void cfd_lbm_2d_init_fluid(cfd_lbm_2d_grid *grid, float u0)
 {
   int y;
   for (y = 0; y < grid->ydim; ++y)
@@ -209,15 +209,15 @@ CFD_API CFD_INLINE void cfd_lbm_init_fluid(cfd_lbm_grid *grid, float u0)
     int x;
     for (x = 0; x < grid->xdim; ++x)
     {
-      cfd_lbm_init_equilibrium(grid, x, y, u0, 0.0f, 1.0f);
+      cfd_lbm_2d_init_equilibrium(grid, x, y, u0, 0.0f, 1.0f);
     }
   }
 }
 
 /* Place tracers in a grid formation. */
-CFD_API CFD_INLINE void cfd_lbm_init_tracers(cfd_lbm_grid *grid)
+CFD_API CFD_INLINE void cfd_lbm_2d_init_tracers(cfd_lbm_2d_grid *grid)
 {
-  int nRows = (int)(cfd_sqrtf((float)CFD_LBM_NUMBER_TRACERS) + 0.5f);
+  int nRows = (int)(cfd_sqrtf((float)CFD_LBM_2D_NUMBER_TRACERS) + 0.5f);
 
   float dx;
   float dy;
@@ -236,7 +236,7 @@ CFD_API CFD_INLINE void cfd_lbm_init_tracers(cfd_lbm_grid *grid)
   nextX = dx / 2.0f;
   nextY = dy / 2.0f;
 
-  for (t = 0; t < CFD_LBM_NUMBER_TRACERS; ++t)
+  for (t = 0; t < CFD_LBM_2D_NUMBER_TRACERS; ++t)
   {
     grid->tracerX[t] = nextX;
     grid->tracerY[t] = nextY;
@@ -250,7 +250,7 @@ CFD_API CFD_INLINE void cfd_lbm_init_tracers(cfd_lbm_grid *grid)
 }
 
 /* Collide particles within each cell. */
-CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, float viscosity)
+CFD_API CFD_INLINE void cfd_lbm_2d_collide(cfd_lbm_2d_grid *grid, float viscosity)
 {
 
   float omega = 1.0f / (3.0f * viscosity + 0.5f);
@@ -267,8 +267,8 @@ CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, float viscosity)
       float invRho = 1.0f / thisrho;
       float thisux = (grid->nE[i] + grid->nNE[i] + grid->nSE[i] - grid->nW[i] - grid->nNW[i] - grid->nSW[i]) * invRho;
       float thisuy = (grid->nN[i] + grid->nNE[i] + grid->nNW[i] - grid->nS[i] - grid->nSE[i] - grid->nSW[i]) * invRho;
-      float one9thrho = CFD_LBM_ONE_NINTH * thisrho;
-      float one36thrho = CFD_LBM_ONE_36TH * thisrho;
+      float one9thrho = CFD_LBM_2D_ONE_NINTH * thisrho;
+      float one36thrho = CFD_LBM_2D_ONE_36TH * thisrho;
       float ux3 = 3.0f * thisux;
       float uy3 = 3.0f * thisuy;
       float ux2 = thisux * thisux;
@@ -281,7 +281,7 @@ CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, float viscosity)
       grid->ux[i] = thisux;
       grid->uy[i] = thisuy;
 
-      grid->nC[i] += omega * (CFD_LBM_FOUR_NINTHS * thisrho * (1.0f - u215) - grid->nC[i]);
+      grid->nC[i] += omega * (CFD_LBM_2D_FOUR_NINTHS * thisrho * (1.0f - u215) - grid->nC[i]);
       grid->nE[i] += omega * (one9thrho * (1.0f + ux3 + 4.5f * ux2 - u215) - grid->nE[i]);
       grid->nW[i] += omega * (one9thrho * (1.0f - ux3 + 4.5f * ux2 - u215) - grid->nW[i]);
       grid->nN[i] += omega * (one9thrho * (1.0f + uy3 + 4.5f * uy2 - u215) - grid->nN[i]);
@@ -295,7 +295,7 @@ CFD_API CFD_INLINE void cfd_lbm_collide(cfd_lbm_grid *grid, float viscosity)
 }
 
 /* Move particles along their directions of motion. */
-CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
+CFD_API CFD_INLINE void cfd_lbm_2d_stream(cfd_lbm_2d_grid *grid)
 {
   int y;
   int x;
@@ -372,10 +372,10 @@ CFD_API CFD_INLINE void cfd_lbm_stream(cfd_lbm_grid *grid)
 }
 
 /* Move tracer particles according to the fluid velocity. */
-CFD_API CFD_INLINE void cfd_lbm_move_tracers(cfd_lbm_grid *grid)
+CFD_API CFD_INLINE void cfd_lbm_2d_move_tracers(cfd_lbm_2d_grid *grid)
 {
   int t;
-  for (t = 0; t < CFD_LBM_NUMBER_TRACERS; ++t)
+  for (t = 0; t < CFD_LBM_2D_NUMBER_TRACERS; ++t)
   {
     int roundedX = (int)(grid->tracerX[t] + 0.5f);
     int roundedY = (int)(grid->tracerY[t] + 0.5f);
@@ -404,37 +404,37 @@ CFD_API CFD_INLINE void cfd_lbm_move_tracers(cfd_lbm_grid *grid)
  * # LBM D2Q9 plot value calculations
  * #############################################################################
  */
-CFD_API CFD_INLINE float cfd_lbm_calculate_density(cfd_lbm_grid *grid, int x, int y)
+CFD_API CFD_INLINE float cfd_lbm_2d_calculate_density(cfd_lbm_2d_grid *grid, int x, int y)
 {
   return (grid->rho[x + y * grid->xdim] - 1.0f) * 6.0f;
 }
 
-CFD_API CFD_INLINE float cfd_lbm_calculate_velocity_x(cfd_lbm_grid *grid, int x, int y)
+CFD_API CFD_INLINE float cfd_lbm_2d_calculate_velocity_x(cfd_lbm_2d_grid *grid, int x, int y)
 {
   return grid->ux[x + y * grid->xdim] * 2.0f;
 }
 
-CFD_API CFD_INLINE float cfd_lbm_calculate_velocity_y(cfd_lbm_grid *grid, int x, int y)
+CFD_API CFD_INLINE float cfd_lbm_2d_calculate_velocity_y(cfd_lbm_2d_grid *grid, int x, int y)
 {
   return grid->uy[x + y * grid->xdim] * 2.0f;
 }
 
-CFD_API CFD_INLINE float cfd_lbm_calculate_speed(cfd_lbm_grid *grid, int x, int y)
+CFD_API CFD_INLINE float cfd_lbm_2d_calculate_speed(cfd_lbm_2d_grid *grid, int x, int y)
 {
   return cfd_sqrtf(grid->ux[x + y * grid->xdim] * grid->ux[x + y * grid->xdim] + grid->uy[x + y * grid->xdim] * grid->uy[x + y * grid->xdim]) * 4.0f;
 }
 
-CFD_API CFD_INLINE float cfd_lbm_calculate_curl(cfd_lbm_grid *grid, int x, int y)
+CFD_API CFD_INLINE float cfd_lbm_2d_calculate_curl(cfd_lbm_2d_grid *grid, int x, int y)
 {
   return (grid->uy[x + 1 + y * grid->xdim] - grid->uy[x - 1 + y * grid->xdim] - grid->ux[x + (y + 1) * grid->xdim] + grid->ux[x + (y - 1) * grid->xdim]) * 5.0f;
 }
 
-CFD_API CFD_INLINE float cfd_lbm_calculate_pressure(cfd_lbm_grid *grid, int x, int y)
+CFD_API CFD_INLINE float cfd_lbm_2d_calculate_pressure(cfd_lbm_2d_grid *grid, int x, int y)
 {
   return (grid->rho[x + y * grid->xdim] - 1.0f) * 20.0f;
 }
 
-CFD_API CFD_INLINE float cfd_lbm_calculate_wall_shear_stress(cfd_lbm_grid *grid, int x, int y)
+CFD_API CFD_INLINE float cfd_lbm_2d_calculate_wall_shear_stress(cfd_lbm_2d_grid *grid, int x, int y)
 {
   float shear = 0.0f;
 
