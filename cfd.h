@@ -18,7 +18,7 @@ LICENSE
 /* Check if using C99 or later (inline is supported) */
 #if __STDC_VERSION__ >= 199901L
 #define CFD_INLINE inline
-#define CFD_API extern
+#define CFD_API static
 #elif defined(__GNUC__) || defined(__clang__)
 #define CFD_INLINE __inline__
 #define CFD_API static
