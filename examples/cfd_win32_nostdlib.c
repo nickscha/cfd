@@ -19,8 +19,7 @@ LICENSE
   See end of file for detailed license information.
 
 */
-#include "../cfd.h"                /* Computational Fluid Dynamics API                 */
-#include "../cfd_platform_write.h" /* Optional: OS-Specific write file implementations */
+#include "../cfd.h" /* Computational Fluid Dynamics API */
 
 #define assert(expression)  \
   if (!(expression))        \
