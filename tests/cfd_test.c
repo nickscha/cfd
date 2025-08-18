@@ -335,12 +335,13 @@ int main(void)
   int stepsSlider = 20;        /* simulation steps per frame */
   float viscSlider = 0.02f;    /* fluid viscosity */
   /*int plotSelect = 4; */     /* plotSelect (0:density, 1:x-vel, 2:y-vel, 3:speed, 4:curl, 5: pressure, 6: wall shear stress) */
-  int num_plots = 7;           /* Number of plot types from 0 to 6 */
+  int num_plots = 1;           /* Number of plot types from 0 to 6 */
   int tracerCheck = 1;         /* tracerCheck (0=off, 1=on) */
   int flowlineCheck = 1;       /* flowlineCheck (0=off, 1=on) */
   int forceCheck = 1;          /* forceCheck (0=off, 1=on) */
-  int frameCount = 250;        /* Number of frames to generate */
+  int frameCount = 10;         /* Number of frames to generate */
   int frame = 0;
+  float omega = 1.0f / (3.0f * viscSlider + 0.5f);
 
   /* --- SETUP --- */
   int xdim = 600 / pxPerSquare;
@@ -380,7 +381,7 @@ int main(void)
     PERF_PROFILE_WITH_NAME({
     for (step = 0; step < stepsSlider; ++step)
     {
-      cfd_lbm_2d_collide(&grid, viscSlider);
+      cfd_lbm_2d_collide(&grid, omega);
       cfd_lbm_2d_stream(&grid);
       if (tracerCheck)
       {
@@ -388,13 +389,20 @@ int main(void)
       }
     } }, "lbm_2d_frame_step");
 
-    /* Loop through all plot types and draw them into the combined buffer */
+    /* Loop through all plot types and draw them into the combined buffer
     PERF_PROFILE_WITH_NAME(
         for (plot_type = 0; plot_type < num_plots; ++plot_type) {
           int y_offset = plot_type * height_per_plot;
           cfd_lbm_2d_draw_single_plot(combined_buffer, &grid, width_per_plot, y_offset, plot_type, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
         },
         "lbm_2d_draw_plots");
+        */
+
+    (void)plot_type;
+    PERF_PROFILE_WITH_NAME(
+        cfd_lbm_2d_draw_single_plot(combined_buffer, &grid, width_per_plot, 0, 4, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
+        ,
+        "lbm_2d_draw_plot_curl");
 
     PERF_PROFILE_WITH_NAME(
         cfd_write_combined_ppm(combined_buffer, width_per_plot, total_height, frame),

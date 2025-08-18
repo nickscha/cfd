@@ -250,10 +250,8 @@ CFD_API CFD_INLINE void cfd_lbm_2d_init_tracers(cfd_lbm_2d_grid *grid)
 }
 
 /* Collide particles within each cell. */
-CFD_API CFD_INLINE void cfd_lbm_2d_collide(cfd_lbm_2d_grid *grid, float viscosity)
+CFD_API CFD_INLINE void cfd_lbm_2d_collide(cfd_lbm_2d_grid *grid, float omega)
 {
-
-  float omega = 1.0f / (3.0f * viscosity + 0.5f);
   int y;
 
   for (y = 1; y < grid->ydim - 1; ++y)
