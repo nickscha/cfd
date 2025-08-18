@@ -105,7 +105,7 @@ typedef struct cfd_lbm_2d_grid
 
   float *rho, *ux, *uy;
 
-  int *barrier;
+  unsigned char *barrier;
 
 } cfd_lbm_2d_grid;
 
@@ -114,8 +114,8 @@ CFD_API CFD_INLINE unsigned long cfd_lbm_2d_grid_memory_size(int xdim, int ydim)
   unsigned long nSites = (unsigned long)(xdim * ydim);
 
   return (
-      nSites * sizeof(float) * 12 /* 12 float arrays      */
-      + nSites * sizeof(int)      /* 1 int array (barrier) */
+      nSites * sizeof(float) * 12      /* 12 float arrays        */
+      + nSites * sizeof(unsigned char) /* 1 byte array (barrier) */
   );
 }
 
@@ -125,35 +125,36 @@ CFD_API CFD_INLINE void cfd_lbm_2d_init_grid(cfd_lbm_2d_grid *grid, void *memory
 
   unsigned long nSites = (unsigned long)(xdim * ydim);
   unsigned long sizeFloat = sizeof(float);
+  unsigned long dist_size = nSites * sizeFloat;
 
   grid->xdim = xdim;
   grid->ydim = ydim;
   grid->nC = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->nN = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->nS = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->nE = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->nW = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->nNE = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->nSE = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->nNW = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->nSW = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->rho = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->ux = (float *)ptr;
-  ptr += nSites * sizeFloat;
+  ptr += dist_size;
   grid->uy = (float *)ptr;
-  ptr += nSites * sizeFloat;
-  grid->barrier = (int *)ptr;
-  ptr += nSites * sizeof(int);
+  ptr += dist_size;
+  grid->barrier = (unsigned char *)ptr;
+  ptr += nSites * sizeof(unsigned char);
 }
 
 /* This function places barriers on the grid. */
@@ -233,17 +234,20 @@ CFD_API CFD_INLINE void cfd_lbm_2d_init_tracers(cfd_lbm_2d_grid *grid)
 
   dx = (float)grid->xdim / (float)nRows;
   dy = (float)grid->ydim / (float)nRows;
-  nextX = dx / 2.0f;
-  nextY = dy / 2.0f;
+
+  nextX = dx * 0.5f;
+  nextY = dy * 0.5f;
 
   for (t = 0; t < CFD_LBM_2D_NUMBER_TRACERS; ++t)
   {
     grid->tracerX[t] = nextX;
     grid->tracerY[t] = nextY;
+
     nextX += dx;
+
     if (nextX >= (float)grid->xdim)
     {
-      nextX = dx / 2.0f;
+      nextX = dx * 0.5f;
       nextY += dy;
     }
   }
@@ -253,11 +257,10 @@ CFD_API CFD_INLINE void cfd_lbm_2d_init_tracers(cfd_lbm_2d_grid *grid)
 CFD_API CFD_INLINE void cfd_lbm_2d_collide(cfd_lbm_2d_grid *grid, float omega)
 {
   int y;
+  int x;
 
   for (y = 1; y < grid->ydim - 1; ++y)
   {
-    int x;
-
     for (x = 1; x < grid->xdim - 1; ++x)
     {
       int i = x + y * grid->xdim;
