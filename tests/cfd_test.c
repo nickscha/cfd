@@ -362,7 +362,7 @@ int main(void)
 
   cfd_build_colormap();
 
-  cfd_lbm_2d_init_grid(&grid, memory, xdim, ydim);
+  cfd_lbm_2d_init_grid(&grid, memory, xdim, ydim, omega);
   cfd_lbm_2d_init_fluid(&grid, speedSlider);
   cfd_lbm_2d_init_barriers(&grid);
 
@@ -381,7 +381,7 @@ int main(void)
     PERF_PROFILE_WITH_NAME({
     for (step = 0; step < stepsSlider; ++step)
     {
-      cfd_lbm_2d_collide(&grid, omega);
+      cfd_lbm_2d_collide(&grid);
       cfd_lbm_2d_stream(&grid);
       if (tracerCheck)
       {

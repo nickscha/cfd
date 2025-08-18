@@ -91,9 +91,11 @@ typedef struct cfd_lbm_2d_grid
   int xdim;
   int ydim;
 
-  /* Force data */
-  float barrierFx, barrierFy;
+  float omega;
+
+  /* Barrier Force data */
   int barrierCount;
+  float barrierFx, barrierFy;
   float barrierxSum, barrierySum;
 
   /* Tracer data */
@@ -119,7 +121,7 @@ CFD_API CFD_INLINE unsigned long cfd_lbm_2d_grid_memory_size(int xdim, int ydim)
   );
 }
 
-CFD_API CFD_INLINE void cfd_lbm_2d_init_grid(cfd_lbm_2d_grid *grid, void *memory, int xdim, int ydim)
+CFD_API CFD_INLINE void cfd_lbm_2d_init_grid(cfd_lbm_2d_grid *grid, void *memory, int xdim, int ydim, float omega)
 {
   char *ptr = (char *)memory;
 
@@ -129,6 +131,8 @@ CFD_API CFD_INLINE void cfd_lbm_2d_init_grid(cfd_lbm_2d_grid *grid, void *memory
 
   grid->xdim = xdim;
   grid->ydim = ydim;
+  grid->omega = omega;
+
   grid->nC = (float *)ptr;
   ptr += dist_size;
   grid->nN = (float *)ptr;
@@ -153,6 +157,7 @@ CFD_API CFD_INLINE void cfd_lbm_2d_init_grid(cfd_lbm_2d_grid *grid, void *memory
   ptr += dist_size;
   grid->uy = (float *)ptr;
   ptr += dist_size;
+
   grid->barrier = (unsigned char *)ptr;
   ptr += nSites * sizeof(unsigned char);
 }
@@ -254,7 +259,7 @@ CFD_API CFD_INLINE void cfd_lbm_2d_init_tracers(cfd_lbm_2d_grid *grid)
 }
 
 /* Collide particles within each cell. */
-CFD_API CFD_INLINE void cfd_lbm_2d_collide(cfd_lbm_2d_grid *grid, float omega)
+CFD_API CFD_INLINE void cfd_lbm_2d_collide(cfd_lbm_2d_grid *grid)
 {
   int y;
   int x;
@@ -277,6 +282,7 @@ CFD_API CFD_INLINE void cfd_lbm_2d_collide(cfd_lbm_2d_grid *grid, float omega)
       float uxuy2 = 2.0f * thisux * thisuy;
       float u2 = ux2 + uy2;
       float u215 = 1.5f * u2;
+      float omega = grid->omega;
 
       grid->rho[i] = thisrho;
       grid->ux[i] = thisux;
