@@ -287,15 +287,15 @@ CFD_API CFD_INLINE void cfd_lbm_2d_draw_single_plot(cfd_pixel_color *buffer, cfd
   /* Step 2: Draw overlays on top of the buffer */
   if (flowlineCheck)
   {
-    PERF_PROFILE_WITH_NAME(cfd_lbm_2d_draw_flowlines(buffer, grid, width, y_offset, pxPerSquare), "lbm_2d_draw_flowlines");
+    cfd_lbm_2d_draw_flowlines(buffer, grid, width, y_offset, pxPerSquare);
   }
   if (tracerCheck)
   {
-    PERF_PROFILE_WITH_NAME(cfd_lbm_2d_draw_tracers(buffer, grid, width, y_offset, pxPerSquare), "lbm_2d_draw_tracers");
+    cfd_lbm_2d_draw_tracers(buffer, grid, width, y_offset, pxPerSquare);
   }
   if (forceCheck)
   {
-    PERF_PROFILE_WITH_NAME(cfd_lbm_2d_draw_force_arrow(buffer, grid, width, y_offset, pxPerSquare), "lbm_2d_draw_force_arrow");
+    cfd_lbm_2d_draw_force_arrow(buffer, grid, width, y_offset, pxPerSquare);
   }
 }
 
