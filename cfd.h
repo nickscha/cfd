@@ -269,6 +269,7 @@ CFD_API CFD_INLINE void cfd_lbm_2d_collide(cfd_lbm_2d_grid *grid)
     for (x = 1; x < grid->xdim - 1; ++x)
     {
       int i = x + y * grid->xdim;
+
       float thisrho = grid->nC[i] + grid->nN[i] + grid->nS[i] + grid->nE[i] + grid->nW[i] + grid->nNW[i] + grid->nNE[i] + grid->nSW[i] + grid->nSE[i];
       float invRho = 1.0f / thisrho;
       float thisux = (grid->nE[i] + grid->nNE[i] + grid->nSE[i] - grid->nW[i] - grid->nNW[i] - grid->nSW[i]) * invRho;

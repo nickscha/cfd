@@ -106,6 +106,7 @@ CFD_API CFD_INLINE void cfd_lbm_2d_draw_tracers(cfd_pixel_color *buffer, cfd_lbm
   int plot_height = grid->ydim * pxPerSquare;
 
   int t;
+
   for (t = 0; t < CFD_LBM_2D_NUMBER_TRACERS; ++t)
   {
     int canvasX = (int)((grid->tracerX[t] + 0.5f) * (float)pxPerSquare);
@@ -132,17 +133,23 @@ CFD_API CFD_INLINE void cfd_lbm_2d_draw_flowlines(cfd_pixel_color *buffer, cfd_l
 {
   int plot_height = grid->ydim * pxPerSquare;
   float sitesPerFlowline = 10.0f / (float)pxPerSquare;
-  float y;
+  float sitesPerFlowlineHalf = sitesPerFlowline * 0.5f;
 
-  for (y = sitesPerFlowline / 2.0f; y < (float)grid->ydim; y += sitesPerFlowline)
+  float y;
+  float x;
+
+  cfd_pixel_color color = {80, 80, 80};
+
+  for (y = sitesPerFlowlineHalf; y < (float)grid->ydim; y += sitesPerFlowline)
   {
-    float x;
-    for (x = sitesPerFlowline / 2.0f; x < (float)grid->xdim; x += sitesPerFlowline)
+    for (x = sitesPerFlowlineHalf; x < (float)grid->xdim; x += sitesPerFlowline)
     {
       int ix = (int)x;
       int iy = (int)y;
+
       float thisUx = grid->ux[ix + iy * grid->xdim];
       float thisUy = grid->uy[ix + iy * grid->xdim];
+
       float speed = cfd_sqrtf(thisUx * thisUx + thisUy * thisUy);
 
       if (speed > 0.0001f)
@@ -155,7 +162,6 @@ CFD_API CFD_INLINE void cfd_lbm_2d_draw_flowlines(cfd_pixel_color *buffer, cfd_l
         int x2 = (int)((float)px + thisUx * scale);
         int y2 = (int)((float)py - thisUy * scale);
 
-        cfd_pixel_color color = {80, 80, 80};
         cfd_lbm_2d_draw_line(buffer, full_width, y_offset, plot_height, x1, y1, x2, y2, color);
       }
     }
@@ -211,24 +217,22 @@ CFD_API CFD_INLINE void cfd_lbm_2d_draw_force_arrow(cfd_pixel_color *buffer, cfd
 CFD_API CFD_INLINE void cfd_lbm_2d_draw_single_plot(cfd_pixel_color *buffer, cfd_lbm_2d_grid *grid, int width, int y_offset, int plotType, float contrast, int pxPerSquare, int tracerCheck, int flowlineCheck, int forceCheck)
 {
   float contrastFactor = cfd_powf(1.2f, contrast);
+
   int y;
+  int x;
 
   /* Step 1: Draw the main fluid plot */
   for (y = 0; y < grid->ydim; ++y)
   {
-    int x;
     for (x = 0; x < grid->xdim; ++x)
     {
-      float value = 0.0f;
-      int cIndex;
-      cfd_pixel_color color;
+      cfd_pixel_color color = {0};
 
-      if (grid->barrier[x + y * grid->xdim])
+      if (!grid->barrier[x + y * grid->xdim])
       {
-        value = -1.0f; /* Special value for barrier */
-      }
-      else
-      {
+        float value = 0.0f;
+        int cIndex;
+
         switch (plotType)
         {
         case 0:
@@ -253,28 +257,11 @@ CFD_API CFD_INLINE void cfd_lbm_2d_draw_single_plot(cfd_pixel_color *buffer, cfd
           value = cfd_lbm_2d_calculate_wall_shear_stress(grid, x, y);
           break;
         }
-        value = value * contrastFactor + 0.5f;
-      }
 
-      cIndex = value == -1.0f ? -1 : (int)(400 * value);
+        cIndex = (int)(400 * (value * contrastFactor + 0.5f));
+        cIndex = cIndex < 0 ? 0 : cIndex;
+        cIndex = cIndex > 400 ? 400 : cIndex;
 
-      if (cIndex < 0 && cIndex != -1)
-      {
-        cIndex = 0;
-      }
-      if (cIndex > 400)
-      {
-        cIndex = 400;
-      }
-
-      if (cIndex == -1)
-      {
-        color.r = 0;
-        color.g = 0;
-        color.b = 0;
-      }
-      else
-      {
         color = cfd_color_map[cIndex];
       }
 
@@ -282,12 +269,15 @@ CFD_API CFD_INLINE void cfd_lbm_2d_draw_single_plot(cfd_pixel_color *buffer, cfd
       {
         int flippedy = grid->ydim - y - 1;
         int py;
+
         for (py = flippedy * pxPerSquare; py < (flippedy + 1) * pxPerSquare; ++py)
         {
+          int base = (py + y_offset) * width;
           int px;
+
           for (px = x * pxPerSquare; px < (x + 1) * pxPerSquare; ++px)
           {
-            buffer[px + (py + y_offset) * width] = color;
+            buffer[px + base] = color;
           }
         }
       }
@@ -297,15 +287,15 @@ CFD_API CFD_INLINE void cfd_lbm_2d_draw_single_plot(cfd_pixel_color *buffer, cfd
   /* Step 2: Draw overlays on top of the buffer */
   if (flowlineCheck)
   {
-    cfd_lbm_2d_draw_flowlines(buffer, grid, width, y_offset, pxPerSquare);
+    PERF_PROFILE_WITH_NAME(cfd_lbm_2d_draw_flowlines(buffer, grid, width, y_offset, pxPerSquare), "lbm_2d_draw_flowlines");
   }
   if (tracerCheck)
   {
-    cfd_lbm_2d_draw_tracers(buffer, grid, width, y_offset, pxPerSquare);
+    PERF_PROFILE_WITH_NAME(cfd_lbm_2d_draw_tracers(buffer, grid, width, y_offset, pxPerSquare), "lbm_2d_draw_tracers");
   }
   if (forceCheck)
   {
-    cfd_lbm_2d_draw_force_arrow(buffer, grid, width, y_offset, pxPerSquare);
+    PERF_PROFILE_WITH_NAME(cfd_lbm_2d_draw_force_arrow(buffer, grid, width, y_offset, pxPerSquare), "lbm_2d_draw_force_arrow");
   }
 }
 
@@ -317,10 +307,12 @@ CFD_API CFD_INLINE void cfd_write_combined_ppm(cfd_pixel_color *buffer, int widt
   sprintf(filename, "frame_%05d.ppm", frame);
 
   fp = fopen(filename, "wb");
+
   if (!fp)
   {
     return;
   }
+
   (void)fprintf(fp, "P6\n%d %d\n255\n", width, total_height);
   (void)fwrite(buffer, sizeof(cfd_pixel_color), (size_t)(width * total_height), fp);
   (void)fclose(fp);
@@ -352,13 +344,21 @@ int main(void)
   int height_per_plot = ydim * pxPerSquare;
   int total_height = height_per_plot * num_plots;
 
-  unsigned long grid_size = cfd_lbm_2d_grid_memory_size(xdim, ydim);
-  unsigned long io_size = (unsigned long)(width_per_plot * total_height) * (unsigned long)sizeof(cfd_pixel_color);
-
-  void *memory = malloc(grid_size + io_size);
+  unsigned long memory_grid_size = cfd_lbm_2d_grid_memory_size(xdim, ydim);
+  unsigned long memory_io_size = (unsigned long)(width_per_plot * total_height) * (unsigned long)sizeof(cfd_pixel_color);
+  unsigned long memory_size = memory_grid_size + memory_io_size;
+  void *memory = malloc(memory_size);
+  cfd_pixel_color *memory_ppm = (cfd_pixel_color *)((char *)memory + memory_grid_size);
 
   cfd_lbm_2d_grid grid = {0};
-  cfd_pixel_color *combined_buffer = (cfd_pixel_color *)((char *)memory + grid_size);
+
+  printf("[cfd][lbm] mem. grid (MB): %10.4f\n", (double)memory_grid_size / 1024.0 / 1024.0);
+  printf("[cfd][lbm] mem. io   (MB): %10.4f\n", (double)memory_io_size / 1024.0 / 1024.0);
+  printf("[cfd][lbm]      viscosity: %10.4f\n", (double)viscSlider);
+  printf("[cfd][lbm]          omega: %10.4f\n", (double)omega);
+  printf("[cfd][lbm]          speed: %10.4f\n", (double)speedSlider);
+  printf("[cfd][lbm]              x: %10i\n", xdim);
+  printf("[cfd][lbm]              y: %10i\n", ydim);
 
   cfd_build_colormap();
 
@@ -400,12 +400,12 @@ int main(void)
 
     (void)plot_type;
     PERF_PROFILE_WITH_NAME(
-        cfd_lbm_2d_draw_single_plot(combined_buffer, &grid, width_per_plot, 0, 4, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
+        cfd_lbm_2d_draw_single_plot(memory_ppm, &grid, width_per_plot, 0, 4, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
         ,
         "lbm_2d_draw_plot_curl");
 
     PERF_PROFILE_WITH_NAME(
-        cfd_write_combined_ppm(combined_buffer, width_per_plot, total_height, frame),
+        cfd_write_combined_ppm(memory_ppm, width_per_plot, total_height, frame),
         "lbm_2d_write_ppm");
   }
 
