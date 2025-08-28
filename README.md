@@ -41,7 +41,7 @@ int main() {
 
     unsigned long memory_grid_size = cfd_lbm_2d_grid_memory_size(xdim, ydim);
     unsigned long memory_size = memory_grid_size;
-    
+
     /* Or nostdlib VirtualAlloc/mmap/... */
     void *memory = malloc(memory_size);
 
@@ -86,6 +86,31 @@ int main() {
 
     return 0;
 }
+```
+
+## Run the testing suite
+
+Under the `tests` folder there is currently an example that visualizes the LBM D2Q9 model.
+The program creates a ppm image file for each frame.
+
+You can directly run the `build.bat` file or run this command:
+
+```bat
+@echo off
+
+set DEF_FLAGS_COMPILER=-std=c89 -march=native -mtune=native -pedantic -ffast-math -funroll-loops -finline-functions -flto -Wall -Wextra -Werror -Wvla -Wconversion -Wdouble-promotion -Wsign-conversion -Wuninitialized -Winit-self -Wunused -Wunused-macros -Wunused-local-typedefs
+set DEF_FLAGS_LINKER=
+set SOURCE_NAME=cfd_test
+
+rm *.ppm
+cc -s -O3 %DEF_FLAGS_COMPILER% -o %SOURCE_NAME%.exe %SOURCE_NAME%.c %DEF_FLAGS_LINKER%
+%SOURCE_NAME%.exe
+```
+
+Afterwards you can generate a video from the ppm frames using FFMPEG or similar ones.
+
+```bat
+ffmpeg -y -framerate 30 -i frame_%05d.ppm -c:v libx264 -pix_fmt yuv420p cfd.mp4
 ```
 
 ## Run Example: nostdlib, freestsanding
