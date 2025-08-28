@@ -379,6 +379,12 @@ CFD_API CFD_INLINE void cfd_lbm_2d_stream(cfd_lbm_2d_grid *grid)
   }
 }
 
+CFD_API CFD_INLINE void cfd_lbm_2d_collide_and_stream(cfd_lbm_2d_grid *grid)
+{
+  cfd_lbm_2d_collide(grid);
+  cfd_lbm_2d_stream(grid);
+}
+
 /* Move tracer particles according to the fluid velocity. */
 CFD_API CFD_INLINE void cfd_lbm_2d_move_tracers(cfd_lbm_2d_grid *grid)
 {

@@ -17,11 +17,72 @@ For more information please look at the "cfd.h" file or take a look at the "exam
 
 Download or clone cfd.h and include it in your project.
 
+**Note:** 
+- The following is a simplified example code showing you how to use the API. 
+- Under the tests folder you can see an implementation with visualization.
+- This is WIP and will be enhanced/documented further in future releases.
+
 ```C
 #include "cfd.h"                /* Computational Fluid Dynamics API        */
 #include "cfd_platform_write.h" /* Optional: OS-Specific write file IO API */
+#include "stdlib.h"             /* For demonstration we use stdlib         */
 
 int main() {
+    /* Setup the lattice boltzmann parameters */
+    int xdim        = 300;
+    int ydim        = 120;
+    float viscosity = 0.02f;
+    float omega     = 1.0f / (3.0f * viscosity + 0.5f);
+    float speed     = 0.1f;
+
+    int frame_count = 500;
+    int frame       = 0;
+    int frame_steps = 20;
+
+    unsigned long memory_grid_size = cfd_lbm_2d_grid_memory_size(xdim, ydim);
+    unsigned long memory_size = memory_grid_size;
+    
+    /* Or nostdlib VirtualAlloc/mmap/... */
+    void *memory = malloc(memory_size);
+
+    cfd_lbm_2d_grid grid = {0};
+
+    cfd_lbm_2d_init_grid(&grid, memory, xdim, ydim, omega);
+    cfd_lbm_2d_init_fluid(&grid, speed);
+    cfd_lbm_2d_init_barriers(&grid);
+    cfd_lbm_2d_init_tracers(&grid);
+
+    /* Run the simulation at 20 steps per frame */
+    for (frame = 0; frame < frame_count; ++frame)
+    {
+        int step;
+        int x, y;
+
+        /* Step simulation */
+        for (step = 0; step < frame_steps; ++step)
+        {
+            cfd_lbm_2d_collide_and_stream(&grid);
+            cfd_lbm_2d_move_tracers(&grid);
+        }
+
+        /* The grid now contains the updated data for all cells */
+        /* You can access them as follows                       */
+        for (y = 0; y < grid.ydim; ++y)
+        {
+            for (x = 0; x < grid.xdim; ++x)
+            {
+                int idx = x + y * grid.xdim;
+
+                if (!grid.barrier[idx])
+                {
+                    float curl_value = cfd_lbm_2d_calculate_curl(&grid, x, y);
+                    (void)curl_value;
+                }
+            }
+        }
+    }
+
+    free(memory);
 
     return 0;
 }

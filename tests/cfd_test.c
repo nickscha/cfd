@@ -318,6 +318,64 @@ CFD_API CFD_INLINE void cfd_write_combined_ppm(cfd_pixel_color *buffer, int widt
   (void)fclose(fp);
 }
 
+void cfd_test_simple_example(void)
+{
+  /* Setup the lattice boltzmann parameters */
+  int xdim = 300;
+  int ydim = 120;
+  float viscosity = 0.02f;
+  float omega = 1.0f / (3.0f * viscosity + 0.5f);
+  float speed = 0.1f;
+
+  int frame_count = 500;
+  int frame = 0;
+  int frame_steps = 20;
+
+  unsigned long memory_grid_size = cfd_lbm_2d_grid_memory_size(xdim, ydim);
+  unsigned long memory_size = memory_grid_size;
+
+  /* Or nostdlib VirtualAlloc/mmap/... */
+  void *memory = malloc(memory_size);
+
+  cfd_lbm_2d_grid grid = {0};
+
+  cfd_lbm_2d_init_grid(&grid, memory, xdim, ydim, omega);
+  cfd_lbm_2d_init_fluid(&grid, speed);
+  cfd_lbm_2d_init_barriers(&grid);
+  cfd_lbm_2d_init_tracers(&grid);
+
+  /* Run the simulation at 20 steps per frame */
+  for (frame = 0; frame < frame_count; ++frame)
+  {
+    int step;
+    int x, y;
+
+    for (step = 0; step < frame_steps; ++step)
+    {
+      cfd_lbm_2d_collide_and_stream(&grid);
+      cfd_lbm_2d_move_tracers(&grid);
+    }
+
+    /* The grid now contains the updated data for all cells */
+    /* You can access them as follows                       */
+    for (y = 0; y < grid.ydim; ++y)
+    {
+      for (x = 0; x < grid.xdim; ++x)
+      {
+        int idx = x + y * grid.xdim;
+
+        if (!grid.barrier[idx])
+        {
+          float curl_value = cfd_lbm_2d_calculate_curl(&grid, x, y);
+          (void)curl_value;
+        }
+      }
+    }
+  }
+
+  free(memory);
+}
+
 int main(void)
 {
   /* --- CONTROLS --- */
@@ -331,7 +389,7 @@ int main(void)
   int tracerCheck = 1;         /* tracerCheck (0=off, 1=on) */
   int flowlineCheck = 1;       /* flowlineCheck (0=off, 1=on) */
   int forceCheck = 1;          /* forceCheck (0=off, 1=on) */
-  int frameCount = 10;         /* Number of frames to generate */
+  int frameCount = 500;        /* Number of frames to generate */
   int frame = 0;
   float omega = 1.0f / (3.0f * viscSlider + 0.5f);
 
@@ -378,16 +436,16 @@ int main(void)
     int step;
     int plot_type;
 
-    PERF_PROFILE_WITH_NAME({
     for (step = 0; step < stepsSlider; ++step)
     {
-      cfd_lbm_2d_collide(&grid);
-      cfd_lbm_2d_stream(&grid);
+
+      cfd_lbm_2d_collide_and_stream(&grid);
+
       if (tracerCheck)
       {
         cfd_lbm_2d_move_tracers(&grid);
       }
-    } }, "lbm_2d_frame_step");
+    }
 
     /* Loop through all plot types and draw them into the combined buffer
     PERF_PROFILE_WITH_NAME(
@@ -399,19 +457,16 @@ int main(void)
         */
 
     (void)plot_type;
-    PERF_PROFILE_WITH_NAME(
-        cfd_lbm_2d_draw_single_plot(memory_ppm, &grid, width_per_plot, 0, 4, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
-        ,
-        "lbm_2d_draw_plot_curl");
 
-    PERF_PROFILE_WITH_NAME(
-        cfd_write_combined_ppm(memory_ppm, width_per_plot, total_height, frame),
-        "lbm_2d_write_ppm");
+    cfd_lbm_2d_draw_single_plot(memory_ppm, &grid, width_per_plot, 0, 4, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
+    cfd_write_combined_ppm(memory_ppm, width_per_plot, total_height, frame);
   }
 
   printf("Simulation finished.\n");
 
   free(memory);
+
+  cfd_test_simple_example();
 
   return 0;
 }
