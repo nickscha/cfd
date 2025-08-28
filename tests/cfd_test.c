@@ -96,27 +96,29 @@ void cfd_test_simple_example(void)
 void cfd_test_full_visualization(void)
 {
   /* --- CONTROLS --- */
-  int pxPerSquare = 2;         /* cfd_pixel_colors per grid site */
-  float speedSlider = 0.1f;    /* initial fluid speed */
-  float contrastSlider = 0.0f; /* contrastSlider */
-  int stepsSlider = 20;        /* simulation steps per frame */
-  float viscSlider = 0.02f;    /* fluid viscosity */
-  /*int plotSelect = 4; */     /* plotSelect (0:density, 1:x-vel, 2:y-vel, 3:speed, 4:curl, 5: pressure, 6: wall shear stress) */
-  int num_plots = 1;           /* Number of plot types from 0 to 6 */
-  int tracerCheck = 1;         /* tracerCheck (0=off, 1=on) */
-  int flowlineCheck = 1;       /* flowlineCheck (0=off, 1=on) */
-  int forceCheck = 1;          /* forceCheck (0=off, 1=on) */
-  int frameCount = 500;        /* Number of frames to generate */
+  int pixel_per_square = 2; /* cfd_pixel_colors per grid site */
+  float speed = 0.1f;       /* initial fluid speed            */
+  float contrast = 0.0f;    /* contrast                       */
+  float viscosity = 0.02f;  /* fluid viscosity                */
+  float omega = 1.0f / (3.0f * viscosity + 0.5f);
+  int frame_count = 500; /* Number of frames to generate */
+  int frame_steps = 20;  /* simulation steps per frame   */
   int frame = 0;
-  float omega = 1.0f / (3.0f * viscSlider + 0.5f);
+
+  /* --- VISUALIZATIONS --- */
+  int enable_tracer = 1;      /* enable_tracer      (0=off, 1=on) */
+  int enable_flowline = 1;    /* enable_flowline    (0=off, 1=on) */
+  int enable_force_arrow = 1; /* enable_force_arrow (0=off, 1=on) */
+  int num_plots = 1;          /* Number of plot types from 0 to 6 */
+  /*int plotSelect = 4; */    /* plotSelect (0:density, 1:x-vel, 2:y-vel, 3:speed, 4:curl, 5: pressure, 6: wall shear stress) */
 
   /* --- SETUP --- */
-  int xdim = 600 / pxPerSquare;
-  int ydim = 240 / pxPerSquare;
+  int xdim = 600 / pixel_per_square;
+  int ydim = 240 / pixel_per_square;
 
   /* --- SETUP FOR COMBINED PLOTS --- */
-  int width_per_plot = xdim * pxPerSquare;
-  int height_per_plot = ydim * pxPerSquare;
+  int width_per_plot = xdim * pixel_per_square;
+  int height_per_plot = ydim * pixel_per_square;
   int total_height = height_per_plot * num_plots;
 
   unsigned long memory_grid_size = cfd_lbm_2d_grid_memory_size(xdim, ydim);
@@ -129,36 +131,36 @@ void cfd_test_full_visualization(void)
 
   printf("[cfd][lbm] mem. grid (MB): %10.4f\n", (double)memory_grid_size / 1024.0 / 1024.0);
   printf("[cfd][lbm] mem. io   (MB): %10.4f\n", (double)memory_io_size / 1024.0 / 1024.0);
-  printf("[cfd][lbm]      viscosity: %10.4f\n", (double)viscSlider);
+  printf("[cfd][lbm]      viscosity: %10.4f\n", (double)viscosity);
   printf("[cfd][lbm]          omega: %10.4f\n", (double)omega);
-  printf("[cfd][lbm]          speed: %10.4f\n", (double)speedSlider);
+  printf("[cfd][lbm]          speed: %10.4f\n", (double)speed);
   printf("[cfd][lbm]              x: %10i\n", xdim);
   printf("[cfd][lbm]              y: %10i\n", ydim);
 
   cfd_build_colormap();
 
   cfd_lbm_2d_init_grid(&grid, memory, xdim, ydim, omega);
-  cfd_lbm_2d_init_fluid(&grid, speedSlider);
+  cfd_lbm_2d_init_fluid(&grid, speed);
   cfd_lbm_2d_init_barriers(&grid);
 
-  if (tracerCheck)
+  if (enable_tracer)
   {
     cfd_lbm_2d_init_tracers(&grid);
   }
 
   /* --- SIMULATION LOOP --- */
-  printf("Starting simulation...\n");
-  for (frame = 0; frame < frameCount; ++frame)
+  printf("[cfd][lbm] Starting simulation...\n");
+  for (frame = 0; frame < frame_count; ++frame)
   {
     int step;
     int plot_type;
 
-    for (step = 0; step < stepsSlider; ++step)
+    for (step = 0; step < frame_steps; ++step)
     {
 
       cfd_lbm_2d_collide_and_stream(&grid);
 
-      if (tracerCheck)
+      if (enable_tracer)
       {
         cfd_lbm_2d_move_tracers(&grid);
       }
@@ -168,18 +170,18 @@ void cfd_test_full_visualization(void)
     PERF_PROFILE_WITH_NAME(
         for (plot_type = 0; plot_type < num_plots; ++plot_type) {
           int y_offset = plot_type * height_per_plot;
-          cfd_lbm_2d_draw_single_plot(combined_buffer, &grid, width_per_plot, y_offset, plot_type, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
+          cfd_lbm_2d_draw_single_plot(combined_buffer, &grid, width_per_plot, y_offset, plot_type, contrast, pixel_per_square, enable_tracer, enable_flowline, enable_force_arrow);
         },
         "lbm_2d_draw_plots");
         */
 
     (void)plot_type;
 
-    cfd_lbm_2d_draw_single_plot(memory_ppm, &grid, width_per_plot, 0, 4, contrastSlider, pxPerSquare, tracerCheck, flowlineCheck, forceCheck);
+    cfd_lbm_2d_draw_single_plot(memory_ppm, &grid, width_per_plot, 0, 4, contrast, pixel_per_square, enable_tracer, enable_flowline, enable_force_arrow);
     cfd_test_write_combined_ppm(memory_ppm, width_per_plot, total_height, frame);
   }
 
-  printf("Simulation finished.\n");
+  printf("[cfd][lbm] Simulation finished.\n");
 
   free(memory);
 }
