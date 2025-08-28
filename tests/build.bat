@@ -7,4 +7,3 @@ set SOURCE_NAME=cfd_test
 rm *.ppm
 cc -s -O3 %DEF_FLAGS_COMPILER% -o %SOURCE_NAME%.exe %SOURCE_NAME%.c %DEF_FLAGS_LINKER%
 %SOURCE_NAME%.exe
-ffmpeg -y -framerate 30 -i frame_%05d.ppm -c:v libx264 -pix_fmt yuv420p cfd.mp4

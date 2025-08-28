@@ -110,7 +110,7 @@ cc -s -O3 %DEF_FLAGS_COMPILER% -o %SOURCE_NAME%.exe %SOURCE_NAME%.c %DEF_FLAGS_L
 Afterwards you can generate a video from the ppm frames using FFMPEG or similar ones.
 
 ```bat
-ffmpeg -y -framerate 30 -i frame_%05d.ppm -c:v libx264 -pix_fmt yuv420p cfd.mp4
+ffmpeg -y -framerate 30 -i frame_%%05d.ppm -c:v libx264 -pix_fmt yuv420p cfd.mp4
 ```
 
 ## Run Example: nostdlib, freestsanding
