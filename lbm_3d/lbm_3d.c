@@ -167,34 +167,37 @@ int main(void)
                         }
                         else
                         {
-                            /*
-                            m4x4 model_view_projection = vm_m4x4_mul(projection_view, vm_m4x4_scalef(model, 0.05f));
-                            */
+
                             m4x4 model_view_projection = vm_m4x4_mul(
                                 projection_view,
                                 vm_m4x4_scale(model, vm_v3(0.05f, 0.05f, 0.05f)));
 
                             csr_color c0 = {120, 120, 120};
 
+                            float curl_threshold = 0.08f;
                             float value = cfd_lbm_3d_calculate_curl(&grid, x, y, z);
 
-                            float contrast = 0.0f;
-                            float contrastFactor = cfd_powf(1.2f, contrast);
-                            int cIndex = (int)(400 * (value * contrastFactor + 0.5f));
-                            cIndex = cIndex < 0 ? 0 : cIndex;
-                            cIndex = cIndex > 400 ? 400 : cIndex;
+                            if (value > curl_threshold && z > 0 &&  z < zdim - 1)
+                            {
 
-                            c0.r = cfd_color_map[cIndex].r;
-                            c0.g = cfd_color_map[cIndex].g;
-                            c0.b = cfd_color_map[cIndex].b;
+                                float contrast = 0.0f;
+                                float contrastFactor = cfd_powf(1.2f, contrast);
+                                int cIndex = (int)(400 * (value * contrastFactor + 0.5f));
+                                cIndex = cIndex < 0 ? 0 : cIndex;
+                                cIndex = cIndex > 400 ? 400 : cIndex;
 
-                            csr_render(
-                                &context,
-                                CSR_RENDER_SOLID,
-                                CSR_CULLING_CCW_BACKFACE, 3,
-                                cube_vertices, cube_vertices_size,
-                                cube_indices, cube_indices_size,
-                                model_view_projection.e, c0, c0, c0);
+                                c0.r = cfd_color_map[cIndex].r;
+                                c0.g = cfd_color_map[cIndex].g;
+                                c0.b = cfd_color_map[cIndex].b;
+
+                                csr_render(
+                                    &context,
+                                    CSR_RENDER_SOLID,
+                                    CSR_CULLING_CCW_BACKFACE, 3,
+                                    cube_vertices, cube_vertices_size,
+                                    cube_indices, cube_indices_size,
+                                    model_view_projection.e, c0, c0, c0);
+                            }
                         }
                     }
                 }
@@ -203,7 +206,7 @@ int main(void)
             /* Render Tracers */
             for (t = 0; t < CFD_LBM_3D_NUMBER_TRACERS; ++t)
             {
-                csr_color tracer_color = {0, 255, 0};
+                csr_color tracer_color = {0, 200, 0};
                 v3 tracer_position = vm_v3(grid.tracerX[t], grid.tracerY[t], grid.tracerZ[t]);
 
                 if (tracer_position.x > xdim || tracer_position.y > ydim || tracer_position.z > zdim ||
@@ -217,7 +220,7 @@ int main(void)
 
                     m4x4 model_view_projection = vm_m4x4_mul(
                         projection_view,
-                        vm_m4x4_scale(model, vm_v3(0.25f, 0.25f, 0.25f)));
+                        vm_m4x4_scale(model, vm_v3(0.2f, 0.2f, 0.2f)));
 
                     csr_render(
                         &context,
