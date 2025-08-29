@@ -140,11 +140,11 @@ int main(void)
             csr_render_clear_screen(&context, clear_color);
 
             /* Render Grid and Barriers */
-            for (z = 0; z < grid.zdim; ++z)
+            for (z = 1; z < grid.zdim - 1; ++z)
             {
-                for (y = 0; y < grid.ydim; ++y)
+                for (y = 1; y < grid.ydim - 1; ++y)
                 {
-                    for (x = 0; x < grid.xdim; ++x)
+                    for (x = 1; x < grid.xdim - 1; ++x)
                     {
                         int xdim_ydim = grid.xdim * grid.ydim;
                         int idx = x + y * grid.xdim + z * xdim_ydim;
@@ -167,18 +167,16 @@ int main(void)
                         }
                         else
                         {
-
-                            m4x4 model_view_projection = vm_m4x4_mul(
-                                projection_view,
-                                vm_m4x4_scale(model, vm_v3(0.05f, 0.05f, 0.05f)));
-
-                            csr_color c0 = {120, 120, 120};
-
                             float curl_threshold = 0.08f;
                             float value = cfd_lbm_3d_calculate_curl(&grid, x, y, z);
 
-                            if (value > curl_threshold && z > 0 &&  z < zdim - 1)
+                            if (value > curl_threshold)
                             {
+                                m4x4 model_view_projection = vm_m4x4_mul(
+                                    projection_view,
+                                    vm_m4x4_scale(model, vm_v3(0.05f, 0.05f, 0.05f)));
+
+                                csr_color c0 = {120, 120, 120};
 
                                 float contrast = 0.0f;
                                 float contrastFactor = cfd_powf(1.2f, contrast);
