@@ -7,6 +7,9 @@ A C89 standard compliant, single header, nostdlib (no C Standard Library) comput
 <p align="center">
 <a href="https://github.com/nickscha/cfd"><img src="assets/cfd_curl.gif"></a>
 </p>
+<p align="center">
+<a href="https://github.com/nickscha/cfd"><img src="assets/cfd_3d.gif"></a>
+</p>
 
 For more information please look at the "cfd.h" file or take a look at the "examples" or "tests" folder.
 
