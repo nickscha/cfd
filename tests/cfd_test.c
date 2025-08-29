@@ -35,7 +35,7 @@ void cfd_test_write_combined_ppm(cfd_pixel_color *buffer, int width, int total_h
   (void)fclose(fp);
 }
 
-void cfd_test_simple_example(void)
+void cfd_test_2d_simple_example(void)
 {
   /* Setup the lattice boltzmann parameters */
   int xdim = 300;
@@ -44,7 +44,7 @@ void cfd_test_simple_example(void)
   float omega = 1.0f / (3.0f * viscosity + 0.5f);
   float speed = 0.1f;
 
-  int frame_count = 500;
+  int frame_count = 250;
   int frame = 0;
   int frame_steps = 20;
 
@@ -93,7 +93,7 @@ void cfd_test_simple_example(void)
   free(memory);
 }
 
-void cfd_test_full_visualization(void)
+void cfd_test_2d_full_visualization(void)
 {
   /* --- CONTROLS --- */
   int pixel_per_square = 2; /* cfd_pixel_colors per grid site */
@@ -101,7 +101,7 @@ void cfd_test_full_visualization(void)
   float contrast = 0.0f;    /* contrast                       */
   float viscosity = 0.02f;  /* fluid viscosity                */
   float omega = 1.0f / (3.0f * viscosity + 0.5f);
-  int frame_count = 500; /* Number of frames to generate */
+  int frame_count = 250; /* Number of frames to generate */
   int frame_steps = 20;  /* simulation steps per frame   */
   int frame = 0;
 
@@ -129,13 +129,13 @@ void cfd_test_full_visualization(void)
 
   cfd_lbm_2d_grid grid = {0};
 
-  printf("[cfd][lbm] mem. grid (MB): %10.4f\n", (double)memory_grid_size / 1024.0 / 1024.0);
-  printf("[cfd][lbm] mem. io   (MB): %10.4f\n", (double)memory_io_size / 1024.0 / 1024.0);
-  printf("[cfd][lbm]      viscosity: %10.4f\n", (double)viscosity);
-  printf("[cfd][lbm]          omega: %10.4f\n", (double)omega);
-  printf("[cfd][lbm]          speed: %10.4f\n", (double)speed);
-  printf("[cfd][lbm]              x: %10i\n", xdim);
-  printf("[cfd][lbm]              y: %10i\n", ydim);
+  printf("[cfd][lbm][2d] mem. grid (MB): %10.4f\n", (double)memory_grid_size / 1024.0 / 1024.0);
+  printf("[cfd][lbm][2d] mem. io   (MB): %10.4f\n", (double)memory_io_size / 1024.0 / 1024.0);
+  printf("[cfd][lbm][2d]      viscosity: %10.4f\n", (double)viscosity);
+  printf("[cfd][lbm][2d]          omega: %10.4f\n", (double)omega);
+  printf("[cfd][lbm][2d]          speed: %10.4f\n", (double)speed);
+  printf("[cfd][lbm][2d]              x: %10i\n", xdim);
+  printf("[cfd][lbm][2d]              y: %10i\n", ydim);
 
   cfd_build_colormap();
 
@@ -149,7 +149,7 @@ void cfd_test_full_visualization(void)
   }
 
   /* --- SIMULATION LOOP --- */
-  printf("[cfd][lbm] Starting simulation...\n");
+  printf("[cfd][lbm][2d] Starting simulation...\n");
   for (frame = 0; frame < frame_count; ++frame)
   {
     int step;
@@ -181,15 +181,96 @@ void cfd_test_full_visualization(void)
     cfd_test_write_combined_ppm(memory_ppm, width_per_plot, total_height, frame);
   }
 
-  printf("[cfd][lbm] Simulation finished.\n");
+  printf("[cfd][lbm][2d] Simulation finished.\n");
+
+  free(memory);
+}
+
+void cfd_test_3d_simple_example(void)
+{
+  /* Setup the lattice boltzmann parameters */
+  int xdim = 100;
+  int ydim = 50;
+  int zdim = 50;
+
+  float viscosity = 0.02f;
+  float omega = 1.0f / (3.0f * viscosity + 0.5f);
+  float speed = 0.1f;
+
+  int frame_count = 5;
+  int frame = 0;
+  int frame_steps = 20;
+
+  unsigned long memory_grid_size = cfd_lbm_3d_grid_memory_size(xdim, ydim, zdim);
+  unsigned long memory_size = memory_grid_size;
+
+  /* Or nostdlib VirtualAlloc/mmap/... */
+  void *memory = malloc(memory_size);
+
+  cfd_lbm_3d_grid grid = {0};
+
+  {
+    printf("[cfd][lbm][3d] mem. grid (MB): %10.4f\n", (double)memory_grid_size / 1024.0 / 1024.0);
+    printf("[cfd][lbm][3d]      viscosity: %10.4f\n", (double)viscosity);
+    printf("[cfd][lbm][3d]          omega: %10.4f\n", (double)omega);
+    printf("[cfd][lbm][3d]          speed: %10.4f\n", (double)speed);
+    printf("[cfd][lbm][3d]              x: %10i\n", xdim);
+    printf("[cfd][lbm][3d]              y: %10i\n", ydim);
+    printf("[cfd][lbm][3d]              z: %10i\n", zdim);
+  }
+
+  cfd_lbm_3d_init_grid(&grid, memory, xdim, ydim, zdim, omega);
+  cfd_lbm_3d_init_fluid(&grid, speed);
+  cfd_lbm_3d_init_barriers(&grid);
+
+  /* Run the simulation at 20 steps per frame */
+  printf("[cfd][lbm][3d] Starting simulation...\n");
+
+  for (frame = 0; frame < frame_count; ++frame)
+  {
+    int step;
+    int x, y, z;
+
+    PERF_PROFILE_WITH_NAME({
+    for (step = 0; step < frame_steps; ++step)
+    {
+      cfd_lbm_3d_collide_and_stream(&grid);
+    } }, "lbm_3d_step");
+
+    /* The grid now contains the updated data for all cells */
+    /* You can access them as follows                       */
+    for (z = 0; z < grid.zdim; ++z)
+    {
+      for (y = 0; y < grid.ydim; ++y)
+      {
+        for (x = 0; x < grid.xdim; ++x)
+        {
+          int xdim_ydim = grid.xdim * grid.ydim;
+          int idx = x + y * grid.xdim + z * xdim_ydim;
+
+          if (!grid.barrier[idx])
+          {
+            float curl_value = cfd_lbm_3d_calculate_curl(&grid, x, y, z);
+            (void)curl_value;
+          }
+        }
+      }
+    }
+  }
+
+  printf("[cfd][lbm][3d] Simulation finished.\n");
 
   free(memory);
 }
 
 int main(void)
 {
-  cfd_test_simple_example();
-  cfd_test_full_visualization();
+  /* LBM D2Q9 */
+  cfd_test_2d_simple_example();
+  cfd_test_2d_full_visualization();
+
+  /* LBM D3Q19 */
+  cfd_test_3d_simple_example();
 
   return 0;
 }
